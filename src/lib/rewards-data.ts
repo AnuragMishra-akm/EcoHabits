@@ -4,7 +4,7 @@ export type Reward = {
   points: number;
   brand: string;
   brandLogoUrl: string;
-  couponCode: string;
+  couponCode?: string;
   expires: string;
   claimed: boolean;
 };
@@ -18,7 +18,7 @@ export const rewards: Reward[] = [
     brandLogoUrl: "https://placehold.co/100x100.png",
     couponCode: "ECOTEN",
     expires: "2024-12-31",
-    claimed: true,
+    claimed: false,
   },
   {
     id: "ecowear-400-voucher",
@@ -46,8 +46,7 @@ export const rewards: Reward[] = [
     points: 1500,
     brand: "Sustainable Living Co.",
     brandLogoUrl: "https://placehold.co/100x100.png",
-    couponCode: "ECOTOTE",
     expires: "2025-03-31",
-    claimed: true,
+    claimed: false,
   },
 ];

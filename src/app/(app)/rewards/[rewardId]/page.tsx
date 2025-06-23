@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Copy, Check, Calendar, Gift, Star } from "lucide-react";
+import { Copy, Check, Calendar, Gift } from "lucide-react";
 import { useState } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/AuthContext";
@@ -61,6 +61,7 @@ export default function RedeemPage() {
 
 
   const handleCopy = () => {
+    if(!reward.couponCode) return;
     navigator.clipboard.writeText(reward.couponCode);
     setCopied(true);
     toast({
@@ -102,7 +103,7 @@ export default function RedeemPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {hasClaimed ? (
+            {hasClaimed && reward.couponCode ? (
                 <div className="p-4 text-center border-2 border-dashed rounded-lg border-primary">
                 <p className="text-sm text-muted-foreground">Your Coupon Code</p>
                 <div className="flex items-center justify-center gap-4 mt-2">

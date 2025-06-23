@@ -35,7 +35,7 @@ export default function SettingsPage() {
                             <div className="flex items-center justify-between">
                                 <Label htmlFor="theme-switch" className="flex items-center gap-2">
                                     {/* We only render the icon on the client after mount to avoid a hydration mismatch */}
-                                    {mounted && (resolvedTheme === 'dark' ? <Moon /> : <Sun />)}
+                                    {mounted && (resolvedTheme === 'dark' ? <Moon className="w-6 h-6"/> : <Sun className="w-6 h-6"/>)}
                                     {/* A placeholder to prevent layout shift */}
                                     {!mounted && <div className="w-6 h-6" />} 
                                     <span>Dark Mode</span>

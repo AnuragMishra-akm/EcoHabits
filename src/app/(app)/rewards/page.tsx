@@ -90,6 +90,7 @@ export default function AllRewardsPage() {
                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                         {claimedRewards.map(reward => <RewardCard key={reward.id} reward={reward} isClaimed={true} userPoints={userPoints}/>)}
                     </div>
+                    {claimedRewards.length === 0 && <p className="text-sm text-center text-muted-foreground">You haven't claimed any rewards yet.</p>}
                 </TabsContent>
             </Tabs>
         </main>
