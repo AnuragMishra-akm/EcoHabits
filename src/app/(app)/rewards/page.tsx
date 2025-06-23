@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/context/AuthContext";
+import { cn } from "@/lib/utils";
 
 const getBrandLogoHint = (brand: string) => {
     if (brand.toLowerCase().includes('cafe')) return 'cafe logo';
