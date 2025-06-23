@@ -2,33 +2,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { Trophy, Target, Wind } from "lucide-react";
+import { challenges } from "@/lib/challenges-data";
+import Link from "next/link";
 
 type ChallengesCardProps = {
   className?: string;
 };
-
-const challenges = [
-  { 
-    icon: <Trophy className="text-yellow-500" />,
-    title: "Unilever's Plastic-Free Week", 
-    reward: "+1,500 EcoPoints",
-    progress: 75 
-  },
-  { 
-    icon: <Target className="text-red-500" />,
-    title: "Meatless Mondays", 
-    reward: "+200 EcoPoints",
-    progress: 50 
-  },
-  { 
-    icon: <Wind className="text-blue-400" />,
-    title: "Bike to Work Challenge", 
-    reward: "+500 EcoPoints",
-    progress: 25
-  },
-];
-
 
 export function ChallengesCard({ className }: ChallengesCardProps) {
   return (
@@ -39,8 +18,8 @@ export function ChallengesCard({ className }: ChallengesCardProps) {
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
-          {challenges.map((challenge, index) => (
-            <div key={index} className="flex items-center gap-4">
+          {challenges.map((challenge) => (
+            <div key={challenge.id} className="flex items-center gap-4">
               <div className="p-2 rounded-full bg-secondary">
                 {challenge.icon}
               </div>
@@ -51,7 +30,9 @@ export function ChallengesCard({ className }: ChallengesCardProps) {
                 </div>
                 <Progress value={challenge.progress} className="h-2 mt-2" />
               </div>
-              <Button variant="secondary" size="sm">View</Button>
+              <Button variant="secondary" size="sm" asChild>
+                <Link href={`/challenges/${challenge.id}`}>View</Link>
+              </Button>
             </div>
           ))}
         </div>

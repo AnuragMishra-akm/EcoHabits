@@ -1,8 +1,11 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { Gift } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 type EcoPointsCardProps = {
   className?: string;
@@ -15,6 +18,15 @@ const rewards = [
 ];
 
 export function EcoPointsCard({ className }: EcoPointsCardProps) {
+  const { toast } = useToast();
+
+  const handleRedeem = (rewardName: string, points: number) => {
+    toast({
+      title: "Reward Redeemed!",
+      description: `You've successfully redeemed "${rewardName}" for ${points.toLocaleString()} points.`,
+    });
+  };
+
   return (
     <Card className={cn("flex flex-col", className)}>
       <CardHeader>
@@ -38,7 +50,7 @@ export function EcoPointsCard({ className }: EcoPointsCardProps) {
                 <p className="text-sm font-medium">{reward.name}</p>
                 <p className="text-xs text-accent">{reward.points.toLocaleString()} pts</p>
               </div>
-              <Button variant="outline" size="sm">Redeem</Button>
+              <Button variant="outline" size="sm" onClick={() => handleRedeem(reward.name, reward.points)}>Redeem</Button>
             </div>
           ))}
         </div>
