@@ -1,24 +1,27 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { challenges } from "@/lib/challenges-data";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
 type ChallengesCardProps = {
   className?: string;
 };
 
 export function ChallengesCard({ className }: ChallengesCardProps) {
+  const featuredChallenges = challenges.slice(0, 2);
+
   return (
     <Card className={cn("flex flex-col", className)}>
       <CardHeader>
         <CardTitle>Brand Challenges</CardTitle>
         <CardDescription>Join challenges and earn more points.</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-grow">
         <div className="space-y-6">
-          {challenges.map((challenge) => (
+          {featuredChallenges.map((challenge) => (
             <div key={challenge.id} className="flex items-center gap-4">
               <div className="p-2 rounded-full bg-secondary">
                 {challenge.icon}
@@ -37,6 +40,14 @@ export function ChallengesCard({ className }: ChallengesCardProps) {
           ))}
         </div>
       </CardContent>
+      <CardFooter>
+        <Button variant="outline" className="w-full" asChild>
+            <Link href="/challenges">
+                Show All Challenges
+                <ArrowRight className="w-4 h-4 ml-2" />
+            </Link>
+        </Button>
+      </CardFooter>
     </Card>
   );
 }

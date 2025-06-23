@@ -1,10 +1,10 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { Gift } from "lucide-react";
+import { Gift, ArrowRight } from "lucide-react";
 import { rewards } from "@/lib/rewards-data";
 import Link from "next/link";
 
@@ -13,6 +13,7 @@ type EcoPointsCardProps = {
 };
 
 export function EcoPointsCard({ className }: EcoPointsCardProps) {
+  const popularRewards = rewards.slice(0, 2);
   return (
     <Card className={cn("flex flex-col", className)}>
       <CardHeader>
@@ -30,7 +31,7 @@ export function EcoPointsCard({ className }: EcoPointsCardProps) {
         <div className="mt-6 space-y-3">
             <h3 className="text-sm font-semibold text-center text-muted-foreground">Popular Rewards</h3>
             <Separator />
-          {rewards.map((reward) => (
+          {popularRewards.map((reward) => (
             <div key={reward.id} className="flex items-center justify-between p-2 rounded-lg bg-background">
               <div>
                 <p className="text-sm font-medium">{reward.name}</p>
@@ -43,6 +44,14 @@ export function EcoPointsCard({ className }: EcoPointsCardProps) {
           ))}
         </div>
       </CardContent>
+      <CardFooter>
+         <Button variant="outline" className="w-full" asChild>
+            <Link href="/rewards">
+                All Rewards
+                <ArrowRight className="w-4 h-4 ml-2" />
+            </Link>
+        </Button>
+      </CardFooter>
     </Card>
   );
 }

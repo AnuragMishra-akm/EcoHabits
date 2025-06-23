@@ -6,10 +6,9 @@ import { notFound, useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { ArrowLeft, Award, Users, CheckCircle } from "lucide-react";
-import { Logo } from "@/components/icons/logo";
+import { Award, Users, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export default function ChallengeDetailsPage() {
   const params = useParams<{ challengeId: string }>();
@@ -25,20 +24,12 @@ export default function ChallengeDetailsPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <header className="flex items-center justify-between p-4 border-b bg-card">
-        <div className="flex items-center gap-2">
-          <Logo className="w-8 h-8 text-primary" />
-          <h1 className="text-2xl font-bold tracking-tight text-foreground font-headline">
-            Challenge Details
-          </h1>
-        </div>
-        <Button variant="outline" asChild>
-          <Link href="/">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Dashboard
-          </Link>
-        </Button>
+    <div className="flex flex-col h-full bg-background">
+       <header className="flex items-center p-4 border-b bg-card">
+          <SidebarTrigger className="mr-4 md:hidden" />
+          <div>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground font-headline">Challenge Details</h1>
+          </div>
       </header>
       <main className="flex items-center justify-center flex-1 p-4 sm:p-6 md:p-8">
         <Card className="w-full max-w-2xl">

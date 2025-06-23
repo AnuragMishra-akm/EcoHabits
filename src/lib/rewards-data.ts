@@ -1,5 +1,3 @@
-import type { ReactElement } from "react";
-
 export type Reward = {
   id: string;
   name: string;
@@ -8,6 +6,7 @@ export type Reward = {
   brandLogoUrl: string;
   couponCode: string;
   expires: string;
+  claimed: boolean;
 };
 
 export const rewards: Reward[] = [
@@ -19,6 +18,7 @@ export const rewards: Reward[] = [
     brandLogoUrl: "https://placehold.co/100x100.png",
     couponCode: "ECOTEN",
     expires: "2024-12-31",
+    claimed: true,
   },
   {
     id: "ecowear-400-voucher",
@@ -28,6 +28,7 @@ export const rewards: Reward[] = [
     brandLogoUrl: "https://placehold.co/100x100.png",
     couponCode: "GREEN400",
     expires: "2025-01-31",
+    claimed: false,
   },
   {
     id: "organic-bean-free-coffee",
@@ -37,5 +38,16 @@ export const rewards: Reward[] = [
     brandLogoUrl: "https://placehold.co/100x100.png",
     couponCode: "FREEBEAN",
     expires: "2024-11-30",
+    claimed: false,
+  },
+   {
+    id: "eco-friendly-tote-bag",
+    name: "Eco-Friendly Tote Bag",
+    points: 1500,
+    brand: "Sustainable Living Co.",
+    brandLogoUrl: "https://placehold.co/100x100.png",
+    couponCode: "ECOTOTE",
+    expires: "2025-03-31",
+    claimed: true,
   },
 ];
