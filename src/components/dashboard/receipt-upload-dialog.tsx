@@ -15,10 +15,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { analyzeReceiptForCarbonFootprint, type AnalyzeReceiptOutput } from "@/ai/flows/ocr-receipt-carbon-footprint";
-import { LoaderCircle, CheckCircle, UploadCloud, PieChart } from "lucide-react";
+import { LoaderCircle, Gift, UploadCloud, PieChart } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 
-export function ReceiptUploadDialog({ children }: { children: ReactNode }) {
+export function ReceiptUploadDialog({ children, onAnalysisComplete }: { children: ReactNode, onAnalysisComplete: (points: number) => void; }) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -56,6 +56,13 @@ export function ReceiptUploadDialog({ children }: { children: ReactNode }) {
       const dataUri = await fileToDataUri(file);
       const analysisResult = await analyzeReceiptForCarbonFootprint({ receiptDataUri: dataUri });
       setResult(analysisResult);
+      if (analysisResult.ecoPointsAwarded > 0) {
+        onAnalysisComplete(analysisResult.ecoPointsAwarded);
+        toast({
+            title: "Points Awarded!",
+            description: `You've earned ${analysisResult.ecoPointsAwarded} EcoPoints for this purchase.`,
+        });
+      }
     } catch (error) {
       console.error(error);
       toast({
@@ -78,6 +85,7 @@ export function ReceiptUploadDialog({ children }: { children: ReactNode }) {
   };
   
   const totalFootprint = result?.estimatedCarbonFootprint ?? 0;
+  const awardedPoints = result?.ecoPointsAwarded ?? 0;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -86,14 +94,14 @@ export function ReceiptUploadDialog({ children }: { children: ReactNode }) {
         <DialogHeader>
           <DialogTitle>Scan Receipt</DialogTitle>
           <DialogDescription>
-            Upload an image of your receipt to calculate its carbon footprint.
+            Upload an image of your receipt to calculate its carbon footprint and earn points.
           </DialogDescription>
         </DialogHeader>
         {!result ? (
           <div className="space-y-4">
             <div>
               <Label htmlFor="receipt-upload" className="sr-only">Upload Receipt</Label>
-              <Input id="receipt-upload" type="file" accept="image/*" onChange={handleFileChange} />
+              <Input id="receipt-upload" type="file" accept="image/*,application/pdf" onChange={handleFileChange} />
               {file && <p className="mt-2 text-sm text-muted-foreground">Selected: {file.name}</p>}
             </div>
             <Button onClick={handleSubmit} disabled={isLoading || !file} className="w-full">
@@ -107,18 +115,28 @@ export function ReceiptUploadDialog({ children }: { children: ReactNode }) {
           </div>
         ) : (
           <div className="space-y-4 animate-fade-in">
-             <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                    <CardTitle className="text-sm font-medium">Total Carbon Footprint</CardTitle>
-                    <PieChart className="w-4 h-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold text-primary">{totalFootprint.toFixed(2)} kg CO₂e</div>
-                    <p className="text-xs text-muted-foreground">
-                        Total estimate for this receipt
-                    </p>
-                </CardContent>
-            </Card>
+             <div className="grid grid-cols-2 gap-4">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                        <CardTitle className="text-sm font-medium">Total Footprint</CardTitle>
+                        <PieChart className="w-4 h-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-primary">{totalFootprint.toFixed(2)} kg</div>
+                        <p className="text-xs text-muted-foreground">CO₂e for this receipt</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                        <CardTitle className="text-sm font-medium">Points Awarded</CardTitle>
+                        <Gift className="w-4 h-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-accent">{awardedPoints}</div>
+                        <p className="text-xs text-muted-foreground">EcoPoints earned</p>
+                    </CardContent>
+                </Card>
+             </div>
             <div>
               <h4 className="mb-2 font-semibold">Breakdown by Item:</h4>
               <div className="space-y-2 max-h-48 overflow-y-auto pr-2">

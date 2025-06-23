@@ -7,9 +7,10 @@ import Link from "next/link";
 
 type ActionsCardProps = {
   className?: string;
+  onReceiptAnalysis: (points: number) => void;
 };
 
-export function ActionsCard({ className }: ActionsCardProps) {
+export function ActionsCard({ className, onReceiptAnalysis }: ActionsCardProps) {
   return (
     <Card className={cn(className)}>
       <CardHeader>
@@ -20,7 +21,7 @@ export function ActionsCard({ className }: ActionsCardProps) {
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <ReceiptUploadDialog>
+          <ReceiptUploadDialog onAnalysisComplete={onReceiptAnalysis}>
             <Button variant="outline" size="lg" className="w-full h-24 text-base">
               <UploadCloud className="w-6 h-6 mr-2" />
               Scan Receipt

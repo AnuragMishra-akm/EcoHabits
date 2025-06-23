@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview Analyzes receipts using OCR and AI to estimate the carbon footprint of purchases.
+ * @fileOverview Analyzes receipts using OCR and AI to estimate the carbon footprint of purchases and award EcoPoints.
  *
  * - analyzeReceiptForCarbonFootprint - A function that handles the receipt analysis and carbon footprint estimation.
  * - AnalyzeReceiptInput - The input type for the analyzeReceiptForCarbonFootprint function.
@@ -30,6 +30,9 @@ const AnalyzeReceiptOutputSchema = z.object({
     .describe(
       'A breakdown of the carbon footprint by item, where the key is the item name and the value is the estimated carbon footprint in kilograms of CO2e.'
     ),
+  ecoPointsAwarded: z
+    .number()
+    .describe('The number of EcoPoints awarded based on the purchases.'),
 });
 export type AnalyzeReceiptOutput = z.infer<typeof AnalyzeReceiptOutputSchema>;
 
@@ -47,6 +50,8 @@ const prompt = ai.definePrompt({
 
   Analyze the following receipt image and estimate the total carbon footprint of the purchases. Provide a breakdown of the carbon footprint by item.
 
+  Finally, calculate the EcoPoints awarded. Award 50 EcoPoints for every 1kg of CO2e in the estimated carbon footprint. Round the points to the nearest whole number.
+
   Receipt Image: {{media url=receiptDataUri}}
   `,
 });
@@ -62,4 +67,3 @@ const analyzeReceiptForCarbonFootprintFlow = ai.defineFlow(
     return output!;
   }
 );
-
