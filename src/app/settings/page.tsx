@@ -6,9 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Moon, Sun } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function SettingsPage() {
-    const { theme, setTheme } = useTheme();
+    const { theme, setTheme, resolvedTheme } = useTheme();
+    const [mounted, setMounted] = useState(false);
+
+    // After mounting, we have access to the theme
+    useEffect(() => setMounted(true), []);
 
     return (
         <div className="flex flex-col h-full">
@@ -29,13 +34,17 @@ export default function SettingsPage() {
                         <CardContent>
                             <div className="flex items-center justify-between">
                                 <Label htmlFor="theme-switch" className="flex items-center gap-2">
-                                    {theme === 'dark' || (theme ==='system' && window.matchMedia('(prefers-color-scheme: dark)').matches) ? <Moon /> : <Sun />}
+                                    {/* We only render the icon on the client after mount to avoid a hydration mismatch */}
+                                    {mounted && (resolvedTheme === 'dark' ? <Moon /> : <Sun />)}
+                                    {/* A placeholder to prevent layout shift */}
+                                    {!mounted && <div className="w-6 h-6" />} 
                                     <span>Dark Mode</span>
                                 </Label>
                                 <Switch
                                     id="theme-switch"
                                     checked={theme === 'dark'}
                                     onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+                                    disabled={!mounted}
                                 />
                             </div>
                         </CardContent>
