@@ -13,6 +13,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useAuth, type Activity } from "@/context/AuthContext";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
 const iconMap: { [key: string]: React.ElementType } = {
