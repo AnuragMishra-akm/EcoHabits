@@ -6,7 +6,7 @@ import { doc, getDoc, setDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { fileToDataUri } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { Trophy } from 'lucide-react';
+import { Star, Gift } from 'lucide-react';
 
 export interface UserProfile {
     uid: string;
@@ -16,7 +16,9 @@ export interface UserProfile {
     mobile?: string;
     hasOnboarded: boolean;
     points: number;
+    impactScore: number;
     activities: Activity[];
+    claimedRewards: string[];
 }
 
 export interface Activity {
@@ -37,6 +39,8 @@ interface AuthContextType {
     addPoints: (amount: number) => Promise<void>;
     addActivity: (activity: Omit<Activity, 'id' | 'date'> & { icon: ReactElement }) => Promise<void>;
     completeOnboarding: () => Promise<void>;
+    updateImpactScore: (score: number, pointsToAdd: number) => Promise<void>;
+    redeemReward: (rewardId: string, pointsToDeduct: number) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -63,7 +67,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 if (userDoc.exists()) {
                     setUser(userDoc.data() as UserProfile);
                 } else {
-                    // This case might happen if user is created but doc fails
                     console.log("No user document found, but user is authenticated.");
                     setUser(null);
                 }
@@ -88,6 +91,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             toast({ title: "Error", description: "Could not update your profile.", variant: "destructive" });
         }
     };
+    
+    const addActivity = async (activity: Omit<Activity, 'id' | 'date'> & { icon: ReactElement }) => {
+        if (!firebaseUser) return;
+        
+        const newActivity = {
+            ...activity,
+            id: new Date().getTime().toString(),
+            date: new Date().toISOString(),
+            icon: serializeIcon(activity.icon)
+        };
+        
+        await updateUserInFirestore(firebaseUser.uid, {
+            activities: arrayUnion(newActivity)
+        });
+    };
 
     const updateAvatar = async (file: File) => {
         if (!firebaseUser) return;
@@ -106,20 +124,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await updateUserInFirestore(firebaseUser.uid, { points: newPoints });
     };
 
-    const addActivity = async (activity: Omit<Activity, 'id' | 'date'> & { icon: ReactElement }) => {
-        if (!firebaseUser) return;
+    const updateImpactScore = async (score: number, pointsToAdd: number) => {
+        if (!firebaseUser || !user) return;
         
-        const newActivity = {
-            ...activity,
-            id: new Date().getTime().toString(),
-            date: new Date().toISOString(),
-            icon: serializeIcon(activity.icon)
-        };
+        const newPoints = user.points + pointsToAdd;
+        await updateUserInFirestore(firebaseUser.uid, { impactScore: score, points: newPoints });
+
+        await addActivity({
+            description: `Calculated a new Impact Score of ${score}.`,
+            icon: <Star className="w-5 h-5 text-primary" />,
+        });
+
+        if (pointsToAdd > 0) {
+             await addActivity({
+                description: `Earned ${pointsToAdd} bonus points for a high Impact Score!`,
+                icon: <Gift className="w-5 h-5 text-accent" />,
+            });
+        }
+    };
+    
+    const redeemReward = async (rewardId: string, pointsToDeduct: number) => {
+        if (!firebaseUser || !user) return;
+        if (user.points < pointsToDeduct) throw new Error("Not enough points");
+
+        const newPoints = user.points - pointsToDeduct;
         
         await updateUserInFirestore(firebaseUser.uid, {
-            activities: arrayUnion(newActivity)
+            points: newPoints,
+            claimedRewards: arrayUnion(rewardId)
+        });
+
+         await addActivity({
+            description: `Redeemed a reward for ${pointsToDeduct} points.`,
+            icon: <Gift className="w-5 h-5 text-accent" />,
         });
     };
+
 
     const completeOnboarding = async () => {
         if (!firebaseUser) return;
@@ -133,7 +173,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         updateAvatar,
         addPoints,
         addActivity,
-        completeOnboarding
+        completeOnboarding,
+        updateImpactScore,
+        redeemReward
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

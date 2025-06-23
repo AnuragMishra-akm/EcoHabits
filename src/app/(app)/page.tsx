@@ -6,10 +6,9 @@ import { EcoPointsCard } from "@/components/dashboard/eco-points-card";
 import { ChallengesCard } from "@/components/dashboard/challenges-card";
 import { ActionsCard } from "@/components/dashboard/actions-card";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { useAuth, type Activity } from "@/context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 import type { AnalyzeReceiptOutput } from "@/ai/flows/ocr-receipt-carbon-footprint";
 import { ReceiptText } from "lucide-react";
-import type { ReactElement } from "react";
 
 export default function Home() {
   const { user, addPoints, addActivity } = useAuth();

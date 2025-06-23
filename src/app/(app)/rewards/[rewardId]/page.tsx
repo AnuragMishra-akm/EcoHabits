@@ -6,19 +6,59 @@ import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Copy, Check, Calendar } from "lucide-react";
+import { Copy, Check, Calendar, Gift, Star } from "lucide-react";
 import { useState } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useAuth } from "@/context/AuthContext";
 
 export default function RedeemPage() {
   const params = useParams<{ rewardId: string }>();
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
+  const { user, redeemReward } = useAuth();
+  
   const reward = rewards.find((r) => r.id === params.rewardId);
 
   if (!reward) {
     notFound();
   }
+
+  const hasClaimed = user?.claimedRewards?.includes(reward.id) ?? false;
+  const canAfford = (user?.points ?? 0) >= reward.points;
+
+  const handleRedeem = async () => {
+    if (!canAfford) {
+      toast({
+        title: "Not enough points",
+        description: `You need ${reward.points.toLocaleString()} points to redeem this.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    if (hasClaimed) {
+      toast({
+        title: "Already claimed",
+        description: "You have already claimed this reward.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await redeemReward(reward.id, reward.points);
+      toast({
+        title: "Reward Redeemed!",
+        description: `You've successfully redeemed the ${reward.name}.`,
+      });
+    } catch (error) {
+       toast({
+        title: "Redemption Failed",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
 
   const handleCopy = () => {
     navigator.clipboard.writeText(reward.couponCode);
@@ -62,17 +102,28 @@ export default function RedeemPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="p-4 text-center border-2 border-dashed rounded-lg border-primary">
-              <p className="text-sm text-muted-foreground">Your Coupon Code</p>
-              <div className="flex items-center justify-center gap-4 mt-2">
-                <p className="text-2xl font-bold tracking-widest text-primary font-mono">
-                  {reward.couponCode}
-                </p>
-                <Button variant="ghost" size="icon" onClick={handleCopy}>
-                  {copied ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5" />}
-                </Button>
-              </div>
-            </div>
+            {hasClaimed ? (
+                <div className="p-4 text-center border-2 border-dashed rounded-lg border-primary">
+                <p className="text-sm text-muted-foreground">Your Coupon Code</p>
+                <div className="flex items-center justify-center gap-4 mt-2">
+                    <p className="text-2xl font-bold tracking-widest text-primary font-mono">
+                    {reward.couponCode}
+                    </p>
+                    <Button variant="ghost" size="icon" onClick={handleCopy}>
+                    {copied ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5" />}
+                    </Button>
+                </div>
+                </div>
+            ) : (
+                <div className="p-4 text-center rounded-lg bg-secondary/50">
+                    <p className="text-sm text-muted-foreground">You have</p>
+                    <p className="text-3xl font-bold text-accent flex items-center justify-center gap-2">
+                        <Gift className="w-6 h-6"/>
+                        {(user?.points ?? 0).toLocaleString()}
+                    </p>
+                    <p className="text-sm text-muted-foreground">EcoPoints</p>
+                </div>
+            )}
             <div className="flex items-center justify-between p-3 rounded-md bg-secondary/50 text-secondary-foreground">
                 <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4" />
@@ -82,11 +133,17 @@ export default function RedeemPage() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button className="w-full" asChild>
-              <a href="#" target="_blank" rel="noopener noreferrer">
-                Visit {reward.brand}
-              </a>
-            </Button>
+            {hasClaimed ? (
+                <Button className="w-full" asChild>
+                <a href="#" target="_blank" rel="noopener noreferrer">
+                    Visit {reward.brand}
+                </a>
+                </Button>
+            ) : (
+                <Button className="w-full" onClick={handleRedeem} disabled={!canAfford}>
+                    Redeem for {reward.points.toLocaleString()} points
+                </Button>
+            )}
           </CardFooter>
         </Card>
       </main>

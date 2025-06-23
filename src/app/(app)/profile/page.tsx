@@ -5,7 +5,7 @@ import * as Lucide from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { LogOut, Settings, Award, Trophy, Gift, Upload } from "lucide-react";
+import { LogOut, Settings, Award, Trophy, Gift, Upload, Star } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { challenges } from "@/lib/challenges-data";
 import Link from "next/link";
@@ -19,6 +19,8 @@ import { useToast } from "@/hooks/use-toast";
 const iconMap: { [key: string]: React.ElementType } = {
   Trophy: Lucide.Trophy,
   ReceiptText: Lucide.ReceiptText,
+  Star: Lucide.Star,
+  Gift: Lucide.Gift,
 };
 
 const DeserializeIcon = ({ icon }: { icon: Activity['icon'] }) => {
@@ -109,11 +111,20 @@ export default function ProfilePage() {
                 <CardTitle>{user.name}</CardTitle>
                 <CardDescription>{user.email}</CardDescription>
               </CardHeader>
-              <CardContent className="text-center">
-                 <div className="flex items-center justify-center gap-2 text-2xl font-bold text-accent">
-                    <Gift className="w-6 h-6" />
-                    {user.points.toLocaleString()}
-                    <span className="text-lg font-medium text-muted-foreground">points</span>
+              <CardContent className="grid grid-cols-2 gap-4 text-center">
+                 <div className="p-2 rounded-md bg-secondary/50">
+                    <div className="flex items-center justify-center gap-2 text-2xl font-bold text-accent">
+                        <Gift className="w-6 h-6" />
+                        {user.points.toLocaleString()}
+                    </div>
+                    <span className="text-sm font-medium text-muted-foreground">EcoPoints</span>
+                 </div>
+                 <div className="p-2 rounded-md bg-secondary/50">
+                    <div className="flex items-center justify-center gap-2 text-2xl font-bold text-primary">
+                        <Star className="w-6 h-6" />
+                        {user.impactScore.toLocaleString()}
+                    </div>
+                    <span className="text-sm font-medium text-muted-foreground">Impact Score</span>
                  </div>
               </CardContent>
             </Card>

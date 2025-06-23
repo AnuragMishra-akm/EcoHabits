@@ -57,7 +57,9 @@ export default function SignupPage() {
         mobile: `${values.countryCode}${values.mobileNumber}`,
         avatar: `https://placehold.co/100x100.png?text=${values.name.charAt(0)}`,
         points: 0,
+        impactScore: 0,
         activities: [],
+        claimedRewards: [],
         hasOnboarded: false,
       });
 

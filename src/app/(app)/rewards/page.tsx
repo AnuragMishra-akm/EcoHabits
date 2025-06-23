@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { rewards, type Reward } from "@/lib/rewards-data";
@@ -6,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/context/AuthContext";
 
 const getBrandLogoHint = (brand: string) => {
     if (brand.toLowerCase().includes('cafe')) return 'cafe logo';
@@ -15,9 +18,11 @@ const getBrandLogoHint = (brand: string) => {
     return 'logo';
 }
 
-function RewardCard({ reward }: { reward: Reward }) {
+function RewardCard({ reward, isClaimed, userPoints }: { reward: Reward, isClaimed: boolean, userPoints: number }) {
+    const canAfford = userPoints >= reward.points;
+    
     return (
-        <Card>
+        <Card className={cn(isClaimed && "bg-muted/50")}>
             <CardHeader className="flex-row items-center gap-4 space-y-0">
                 <Image
                     src={reward.brandLogoUrl}
@@ -35,12 +40,10 @@ function RewardCard({ reward }: { reward: Reward }) {
             <CardContent>
                 <div className="flex items-center justify-between">
                     <div className="text-sm font-semibold text-accent">{reward.points.toLocaleString()} points</div>
-                    <Button asChild variant={reward.claimed ? "secondary" : "default"} disabled={reward.claimed}>
-                        {reward.claimed ? (
-                            <span>Claimed</span>
-                        ) : (
-                            <Link href={`/rewards/${reward.id}`}>Redeem</Link>
-                        )}
+                    <Button asChild variant={isClaimed ? "secondary" : "default"} disabled={!isClaimed && !canAfford}>
+                         <Link href={`/rewards/${reward.id}`}>
+                            {isClaimed ? "View" : "Redeem"}
+                        </Link>
                     </Button>
                 </div>
             </CardContent>
@@ -49,8 +52,12 @@ function RewardCard({ reward }: { reward: Reward }) {
 }
 
 export default function AllRewardsPage() {
-  const claimedRewards = rewards.filter(r => r.claimed);
-  const unclaimedRewards = rewards.filter(r => !r.claimed);
+  const { user } = useAuth();
+  const claimedRewardIds = user?.claimedRewards ?? [];
+  const userPoints = user?.points ?? 0;
+
+  const claimedRewards = rewards.filter(r => claimedRewardIds.includes(r.id));
+  const unclaimedRewards = rewards.filter(r => !claimedRewardIds.includes(r.id));
 
   return (
      <div className="flex flex-col h-full">
@@ -75,12 +82,12 @@ export default function AllRewardsPage() {
                 </TabsList>
                 <TabsContent value="unclaimed" className="mt-6">
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                        {unclaimedRewards.map(reward => <RewardCard key={reward.id} reward={reward} />)}
+                        {unclaimedRewards.map(reward => <RewardCard key={reward.id} reward={reward} isClaimed={false} userPoints={userPoints} />)}
                     </div>
                 </TabsContent>
                 <TabsContent value="claimed" className="mt-6">
                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                        {claimedRewards.map(reward => <RewardCard key={reward.id} reward={reward} />)}
+                        {claimedRewards.map(reward => <RewardCard key={reward.id} reward={reward} isClaimed={true} userPoints={userPoints}/>)}
                     </div>
                 </TabsContent>
             </Tabs>
