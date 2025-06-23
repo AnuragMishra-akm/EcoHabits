@@ -5,28 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { Gift } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { rewards } from "@/lib/rewards-data";
+import Link from "next/link";
 
 type EcoPointsCardProps = {
   className?: string;
 };
 
-const rewards = [
-  { name: "10% off at GreenLeaf Cafe", points: 1000 },
-  { name: "₹400 Voucher for EcoWear", points: 2500 },
-  { name: "Free Coffee at The Organic Bean", points: 500 },
-];
-
 export function EcoPointsCard({ className }: EcoPointsCardProps) {
-  const { toast } = useToast();
-
-  const handleRedeem = (rewardName: string, points: number) => {
-    toast({
-      title: "Reward Redeemed!",
-      description: `You've successfully redeemed "${rewardName}" for ${points.toLocaleString()} points.`,
-    });
-  };
-
   return (
     <Card className={cn("flex flex-col", className)}>
       <CardHeader>
@@ -45,12 +31,14 @@ export function EcoPointsCard({ className }: EcoPointsCardProps) {
             <h3 className="text-sm font-semibold text-center text-muted-foreground">Popular Rewards</h3>
             <Separator />
           {rewards.map((reward) => (
-            <div key={reward.name} className="flex items-center justify-between p-2 rounded-lg bg-background">
+            <div key={reward.id} className="flex items-center justify-between p-2 rounded-lg bg-background">
               <div>
                 <p className="text-sm font-medium">{reward.name}</p>
                 <p className="text-xs text-accent">{reward.points.toLocaleString()} pts</p>
               </div>
-              <Button variant="outline" size="sm" onClick={() => handleRedeem(reward.name, reward.points)}>Redeem</Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/rewards/${reward.id}`}>Redeem</Link>
+              </Button>
             </div>
           ))}
         </div>
