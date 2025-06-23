@@ -5,6 +5,7 @@ import { ImpactScoreCard } from "@/components/dashboard/impact-score-card";
 import { EcoPointsCard } from "@/components/dashboard/eco-points-card";
 import { ChallengesCard } from "@/components/dashboard/challenges-card";
 import { ActionsCard } from "@/components/dashboard/actions-card";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useAuth, type Activity } from "@/context/AuthContext";
 import type { AnalyzeReceiptOutput } from "@/ai/flows/ocr-receipt-carbon-footprint";
 import { ReceiptText } from "lucide-react";
@@ -27,6 +28,7 @@ export default function Home() {
     <div className="flex flex-col h-full">
       <header className="flex items-center justify-between p-4 border-b bg-card">
         <div className="flex items-center">
+            <SidebarTrigger className="mr-4 md:hidden" />
             <Header />
         </div>
       </header>

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Copy, Check, Calendar } from "lucide-react";
 import { useState } from "react";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export default function RedeemPage() {
   const params = useParams<{ rewardId: string }>();
@@ -39,6 +40,7 @@ export default function RedeemPage() {
   return (
     <div className="flex flex-col h-full bg-background">
        <header className="flex items-center p-4 border-b bg-card">
+          <SidebarTrigger className="mr-4 md:hidden" />
           <div>
               <h1 className="text-2xl font-bold tracking-tight text-foreground font-headline">Redeem Reward</h1>
           </div>

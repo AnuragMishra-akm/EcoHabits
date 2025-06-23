@@ -3,11 +3,13 @@ import { challenges } from "@/lib/challenges-data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export default function AllChallengesPage() {
   return (
     <div className="flex flex-col h-full">
         <header className="flex items-center p-4 border-b bg-card">
+            <SidebarTrigger className="mr-4 md:hidden" />
             <div>
                 <h1 className="text-2xl font-bold tracking-tight text-foreground font-headline">All Challenges</h1>
                 <p className="text-muted-foreground">Join a challenge to earn points and make a difference.</p>

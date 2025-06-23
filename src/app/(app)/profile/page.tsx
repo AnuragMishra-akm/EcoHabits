@@ -9,6 +9,7 @@ import { LogOut, Settings, Award, Trophy, Gift, Upload } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { challenges } from "@/lib/challenges-data";
 import Link from "next/link";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useAuth, type Activity } from "@/context/AuthContext";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
@@ -73,6 +74,7 @@ export default function ProfilePage() {
   return (
     <div className="flex flex-col h-full">
       <header className="flex items-center p-4 border-b bg-card">
+          <SidebarTrigger className="mr-4 md:hidden" />
           <div>
               <h1 className="text-2xl font-bold tracking-tight text-foreground font-headline">Profile</h1>
               <p className="text-muted-foreground">Manage your account and track your progress.</p>

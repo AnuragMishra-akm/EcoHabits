@@ -4,6 +4,7 @@ import { rewards, type Reward } from "@/lib/rewards-data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 
 const getBrandLogoHint = (brand: string) => {
@@ -54,6 +55,7 @@ export default function AllRewardsPage() {
   return (
      <div className="flex flex-col h-full">
         <header className="flex items-center p-4 border-b bg-card">
+            <SidebarTrigger className="mr-4 md:hidden" />
             <div>
                 <h1 className="text-2xl font-bold tracking-tight text-foreground font-headline">Rewards Store</h1>
                 <p className="text-muted-foreground">Use your EcoPoints to claim exclusive rewards.</p>

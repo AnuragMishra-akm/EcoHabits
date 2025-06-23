@@ -1,4 +1,4 @@
-"use client";
+ "use client";
 
 import { useState } from "react";
 import { challenges } from "@/lib/challenges-data";
@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Award, Users, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export default function ChallengeDetailsPage() {
   const params = useParams<{ challengeId: string }>();
@@ -25,6 +26,7 @@ export default function ChallengeDetailsPage() {
   return (
     <div className="flex flex-col h-full bg-background">
        <header className="flex items-center p-4 border-b bg-card">
+          <SidebarTrigger className="mr-4 md:hidden" />
           <div>
               <h1 className="text-2xl font-bold tracking-tight text-foreground font-headline">Challenge Details</h1>
           </div>

@@ -1,10 +1,15 @@
 "use client";
 
-import { useUser } from "@/context/UserContext";
+import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function Header() {
-  const { user } = useUser();
+  const { user } = useAuth();
+  
+  if (!user) {
+    return null; // Or a loading skeleton
+  }
+
   return (
     <div className="flex items-center gap-4">
        <Avatar className="w-10 h-10 border">

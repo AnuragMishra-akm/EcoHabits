@@ -4,6 +4,7 @@ import { useTheme } from "next-themes";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -17,6 +18,7 @@ export default function SettingsPage() {
     return (
         <div className="flex flex-col h-full">
             <header className="flex items-center p-4 border-b bg-card">
+                <SidebarTrigger className="mr-4 md:hidden" />
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight text-foreground font-headline">Settings</h1>
                     <p className="text-muted-foreground">Customize your app experience.</p>

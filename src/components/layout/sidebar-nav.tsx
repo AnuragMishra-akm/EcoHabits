@@ -5,6 +5,10 @@ import { usePathname } from "next/navigation";
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
 import { Logo } from "@/components/icons/logo";
 import { LayoutDashboard, Trophy, Gift, User, Settings, LogOut, Scale } from "lucide-react";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 const menuItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -17,6 +21,18 @@ const menuItems = [
 
 export function SidebarNav() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    try {
+        await signOut(auth);
+        router.push('/login');
+        toast({ title: "Logged Out", description: "You have been successfully logged out." });
+    } catch (error) {
+        toast({ title: "Logout Failed", description: "Could not log you out. Please try again.", variant: "destructive" });
+    }
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -29,7 +45,7 @@ export function SidebarNav() {
           <SidebarMenuItem key={item.href}>
             <SidebarMenuButton
               asChild
-              isActive={pathname === item.href}
+              isActive={pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))}
               tooltip={{ children: item.label }}
             >
               <Link href={item.href}>
@@ -43,7 +59,7 @@ export function SidebarNav() {
       <div className="p-2 mt-auto">
         <SidebarMenu>
             <SidebarMenuItem>
-                <SidebarMenuButton tooltip={{ children: "Logout" }}>
+                <SidebarMenuButton tooltip={{ children: "Logout" }} onClick={handleLogout}>
                     <LogOut />
                     <span>Logout</span>
                 </SidebarMenuButton>
