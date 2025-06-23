@@ -10,7 +10,7 @@ type EcoPointsCardProps = {
 
 const rewards = [
   { name: "10% off at GreenLeaf Cafe", points: 1000 },
-  { name: "$5 Voucher for EcoWear", points: 2500 },
+  { name: "₹400 Voucher for EcoWear", points: 2500 },
   { name: "Free Coffee at The Organic Bean", points: 500 },
 ];
 
