@@ -1,21 +1,52 @@
+"use client";
+
+import { useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { LogOut, Settings, Award, Trophy, Gift } from "lucide-react";
+import { LogOut, Settings, Award, Trophy, Gift, Upload } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { challenges } from "@/lib/challenges-data";
 import Link from "next/link";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useUser } from "@/context/UserContext";
+import { fileToDataUri } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ProfilePage() {
-  const user = {
-    name: "Alex Doe",
-    email: "alex.doe@example.com",
-    avatar: "https://placehold.co/100x100.png",
-    points: 5400,
+  const { user, points, activities, updateAvatar } = useUser();
+  const { toast } = useToast();
+  const inputFileRef = useRef<HTMLInputElement>(null);
+  const ongoingChallenges = challenges.slice(0, 2);
+
+  const handleAvatarClick = () => {
+    inputFileRef.current?.click();
   };
 
-  const ongoingChallenges = challenges.slice(0, 2);
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        const dataUri = await fileToDataUri(file);
+        updateAvatar(dataUri);
+        toast({
+          title: "Avatar Updated",
+          description: "Your new profile picture has been saved.",
+        });
+      } catch (error) {
+        toast({
+          title: "Upload Failed",
+          description: "Could not upload the selected image. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const formatActivityDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -31,17 +62,34 @@ export default function ProfilePage() {
           <div className="space-y-8 md:col-span-1">
             <Card>
               <CardHeader className="items-center text-center">
-                <Avatar className="w-24 h-24 mb-4">
-                  <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="person face" />
-                  <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                </Avatar>
+                <div className="relative">
+                  <Avatar className="w-24 h-24 mb-4 cursor-pointer" onClick={handleAvatarClick}>
+                    <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="person face" />
+                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="absolute bottom-4 right-0 w-8 h-8 rounded-full"
+                    onClick={handleAvatarClick}
+                  >
+                    <Upload className="w-4 h-4" />
+                  </Button>
+                  <input
+                    type="file"
+                    ref={inputFileRef}
+                    onChange={handleFileChange}
+                    className="hidden"
+                    accept="image/*"
+                  />
+                </div>
                 <CardTitle>{user.name}</CardTitle>
                 <CardDescription>{user.email}</CardDescription>
               </CardHeader>
               <CardContent className="text-center">
                  <div className="flex items-center justify-center gap-2 text-2xl font-bold text-accent">
                     <Gift className="w-6 h-6" />
-                    {user.points.toLocaleString()}
+                    {points.toLocaleString()}
                     <span className="text-lg font-medium text-muted-foreground">points</span>
                  </div>
               </CardContent>
@@ -89,7 +137,25 @@ export default function ProfilePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                 <p className="text-sm text-muted-foreground">Activity feed coming soon...</p>
+                 {activities.length > 0 ? (
+                   <ul className="space-y-4">
+                     {activities.slice(0, 5).map(activity => (
+                       <li key={activity.id} className="flex items-center gap-4">
+                         <div className="p-2 rounded-full bg-secondary">
+                           {activity.icon}
+                         </div>
+                         <div className="flex-grow">
+                           <p className="text-sm">{activity.description}</p>
+                         </div>
+                         <time className="text-xs text-muted-foreground whitespace-nowrap">
+                           {formatActivityDate(activity.date)}
+                         </time>
+                       </li>
+                     ))}
+                   </ul>
+                 ) : (
+                    <p className="text-sm text-muted-foreground">No recent activity to show.</p>
+                 )}
               </CardContent>
             </Card>
           </div>

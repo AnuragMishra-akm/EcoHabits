@@ -4,13 +4,14 @@ import { cn } from "@/lib/utils";
 import { UploadCloud, Scale } from "lucide-react";
 import { ReceiptUploadDialog } from "@/components/dashboard/receipt-upload-dialog";
 import Link from "next/link";
+import type { AnalyzeReceiptOutput } from "@/ai/flows/ocr-receipt-carbon-footprint";
 
 type ActionsCardProps = {
   className?: string;
-  onReceiptAnalysis: (points: number) => void;
+  onAnalysisComplete: (result: AnalyzeReceiptOutput) => void;
 };
 
-export function ActionsCard({ className, onReceiptAnalysis }: ActionsCardProps) {
+export function ActionsCard({ className, onAnalysisComplete }: ActionsCardProps) {
   return (
     <Card className={cn(className)}>
       <CardHeader>
@@ -21,7 +22,7 @@ export function ActionsCard({ className, onReceiptAnalysis }: ActionsCardProps) 
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <ReceiptUploadDialog onAnalysisComplete={onReceiptAnalysis}>
+          <ReceiptUploadDialog onAnalysisComplete={onAnalysisComplete}>
             <Button variant="outline" size="lg" className="w-full h-24 text-base">
               <UploadCloud className="w-6 h-6 mr-2" />
               Scan Receipt

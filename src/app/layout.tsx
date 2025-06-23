@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from '@/components/providers';
 import { SidebarProvider, Sidebar, SidebarInset } from '@/components/ui/sidebar';
 import { SidebarNav } from '@/components/layout/sidebar-nav';
+import { UserProvider } from '@/context/UserContext';
 
 
 export const metadata: Metadata = {
@@ -24,22 +25,24 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased" suppressHydrationWarning>
-        <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-        >
-          <SidebarProvider>
-              <Sidebar collapsible="icon">
-                <SidebarNav />
-              </Sidebar>
-              <SidebarInset>
-                  {children}
-              </SidebarInset>
-            <Toaster />
-          </SidebarProvider>
-        </ThemeProvider>
+        <UserProvider>
+          <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+          >
+            <SidebarProvider>
+                <Sidebar collapsible="icon">
+                  <SidebarNav />
+                </Sidebar>
+                <SidebarInset>
+                    {children}
+                </SidebarInset>
+              <Toaster />
+            </SidebarProvider>
+          </ThemeProvider>
+        </UserProvider>
       </body>
     </html>
   );

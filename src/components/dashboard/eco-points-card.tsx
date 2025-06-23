@@ -10,10 +10,10 @@ import Link from "next/link";
 
 type EcoPointsCardProps = {
   className?: string;
-  totalPoints: number;
+  points: number;
 };
 
-export function EcoPointsCard({ className, totalPoints }: EcoPointsCardProps) {
+export function EcoPointsCard({ className, points }: EcoPointsCardProps) {
   const popularRewards = rewards.slice(0, 2);
   return (
     <Card className={cn("flex flex-col", className)}>
@@ -25,7 +25,7 @@ export function EcoPointsCard({ className, totalPoints }: EcoPointsCardProps) {
         <div className="text-center">
           <div className="flex items-center justify-center gap-2">
              <Gift className="w-10 h-10 text-accent" />
-            <span className="text-5xl font-bold text-foreground">{totalPoints.toLocaleString()}</span>
+            <span className="text-5xl font-bold text-foreground">{points.toLocaleString()}</span>
           </div>
           <p className="text-sm text-muted-foreground">points available</p>
         </div>

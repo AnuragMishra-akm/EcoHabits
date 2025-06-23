@@ -17,8 +17,9 @@ import { useToast } from "@/hooks/use-toast";
 import { analyzeReceiptForCarbonFootprint, type AnalyzeReceiptOutput } from "@/ai/flows/ocr-receipt-carbon-footprint";
 import { LoaderCircle, Gift, UploadCloud, PieChart } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { fileToDataUri } from "@/lib/utils";
 
-export function ReceiptUploadDialog({ children, onAnalysisComplete }: { children: ReactNode, onAnalysisComplete: (points: number) => void; }) {
+export function ReceiptUploadDialog({ children, onAnalysisComplete }: { children: ReactNode, onAnalysisComplete: (result: AnalyzeReceiptOutput) => void; }) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -28,15 +29,6 @@ export function ReceiptUploadDialog({ children, onAnalysisComplete }: { children
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setFile(event.target.files?.[0] ?? null);
     setResult(null); // Reset result when a new file is selected
-  };
-
-  const fileToDataUri = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
   };
 
   const handleSubmit = async () => {
@@ -57,7 +49,7 @@ export function ReceiptUploadDialog({ children, onAnalysisComplete }: { children
       const analysisResult = await analyzeReceiptForCarbonFootprint({ receiptDataUri: dataUri });
       setResult(analysisResult);
       if (analysisResult.ecoPointsAwarded > 0) {
-        onAnalysisComplete(analysisResult.ecoPointsAwarded);
+        onAnalysisComplete(analysisResult);
         toast({
             title: "Points Awarded!",
             description: `You've earned ${analysisResult.ecoPointsAwarded} EcoPoints for this purchase.`,
