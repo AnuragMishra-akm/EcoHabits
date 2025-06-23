@@ -1,7 +1,7 @@
 "use client";
 
 import { rewards } from "@/lib/rewards-data";
-import { notFound } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -11,13 +11,8 @@ import { ArrowLeft, Copy, Check, Calendar } from "lucide-react";
 import { useState } from "react";
 import { Logo } from "@/components/icons/logo";
 
-type RedeemPageProps = {
-  params: {
-    rewardId: string;
-  };
-};
-
-export default function RedeemPage({ params }: RedeemPageProps) {
+export default function RedeemPage() {
+  const params = useParams<{ rewardId: string }>();
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
   const reward = rewards.find((r) => r.id === params.rewardId);

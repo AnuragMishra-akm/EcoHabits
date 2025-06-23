@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { challenges } from "@/lib/challenges-data";
-import { notFound } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -11,13 +11,8 @@ import { ArrowLeft, Award, Users, CheckCircle } from "lucide-react";
 import { Logo } from "@/components/icons/logo";
 import { Badge } from "@/components/ui/badge";
 
-type ChallengeDetailsPageProps = {
-  params: {
-    challengeId: string;
-  };
-};
-
-export default function ChallengeDetailsPage({ params }: ChallengeDetailsPageProps) {
+export default function ChallengeDetailsPage() {
+  const params = useParams<{ challengeId: string }>();
   const [isJoined, setIsJoined] = useState(false);
   const challenge = challenges.find((c) => c.id === params.challengeId);
 
