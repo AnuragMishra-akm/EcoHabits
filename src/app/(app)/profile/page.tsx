@@ -169,7 +169,7 @@ export default function ProfilePage() {
                  <CardDescription>
                   Your latest contributions to a greener planet.
                 </CardDescription>
-              </Header>
+              </CardHeader>
               <CardContent className="space-y-4">
                  {sortedActivities.length > 0 ? (
                    <ul className="space-y-4">
@@ -197,4 +197,3 @@ export default function ProfilePage() {
       </main>
     </div>
   );
-}
