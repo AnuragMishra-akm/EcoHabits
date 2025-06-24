@@ -3,7 +3,7 @@
 
 import React, { createContext, useState, useEffect, useContext, ReactNode, ReactElement } from 'react';
 import { User as FirebaseUser, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, type FieldValue } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { fileToDataUri } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -93,9 +93,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         try {
             const userRef = doc(db, 'users', firebaseUser.uid);
-            await updateDoc(userRef, {
+            const updatePayload: { activities: FieldValue } = {
                 activities: arrayUnion(newActivity)
-            });
+            };
+            await updateDoc(userRef, updatePayload);
             setUser(prev => prev ? { ...prev, activities: [...prev.activities, newActivity] } : null);
         } catch (error) {
             console.error("Error adding activity:", error);
@@ -164,10 +165,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         try {
             const userRef = doc(db, 'users', firebaseUser.uid);
-            await updateDoc(userRef, {
+            const updatePayload: { points: number; claimedRewards: FieldValue } = {
                 points: newPoints,
                 claimedRewards: arrayUnion(rewardId)
-            });
+            };
+            await updateDoc(userRef, updatePayload);
             setUser(prev => prev ? { ...prev, points: newPoints, claimedRewards: [...prev.claimedRewards, rewardId] } : null);
 
              await addActivity({
