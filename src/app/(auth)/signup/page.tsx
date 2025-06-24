@@ -137,8 +137,8 @@ export default function SignupPage() {
                     render={({ field }) => (
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                            <SelectTrigger className="w-[80px]">
-                            <SelectValue placeholder="Code" />
+                            <SelectTrigger className="w-[80px]" suppressHydrationWarning>
+                                <SelectValue placeholder="Code" />
                             </SelectTrigger>
                         </FormControl>
                         <SelectContent>
