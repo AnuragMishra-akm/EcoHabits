@@ -33,11 +33,6 @@ You can find these values in your Firebase project settings under "General" > "Y
 
 ### Deployment on Firebase App Hosting
 
-When you deploy this app using Firebase App Hosting, you do **not** need the `.env` file. Instead, you must configure the same environment variables in the Firebase Console:
+When you deploy this app using Firebase App Hosting, you do **not** need to set any environment variables in the Firebase Console for the client-side Firebase connection.
 
-1.  Go to your Firebase project.
-2.  Navigate to the **App Hosting** section.
-3.  Select your backend.
-4.  In the backend's settings, add the same `NEXT_PUBLIC_...` environment variables with their corresponding values from your Firebase project settings.
-
-This ensures that your deployed application can securely connect to your Firebase services.
+Firebase App Hosting automatically provides the necessary Firebase configuration to your app during the build and deployment process. The code in `src/lib/firebase.ts` is set up to use this automatic configuration when deployed, so no manual steps are required.
