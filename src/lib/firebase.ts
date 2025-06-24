@@ -6,7 +6,7 @@ import { getFirestore } from "firebase/firestore";
 
 let app;
 
-// The Firebase configuration is hardcoded here to ensure it's always available.
+// The Firebase configuration is hardcoded here to ensure it's always available and to bypass any environment variable loading issues.
 const firebaseConfig: FirebaseOptions = {
     apiKey: "AIzaSyDwbBNq7AkDGzlwXPOTnIeb_IlvxEZRvT8",
     authDomain: "ecohabits-io3bn.firebaseapp.com",

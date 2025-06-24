@@ -5,10 +5,3 @@ runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
   maxInstances: 1
-
-env:
-  - variable: NEXT_PUBLIC_FIREBASE_CONFIG
-    value: '{"apiKey":"AIzaSyDwbBNq7AkDGzlwXPOTnIeb_IlvxEZRvT8","authDomain":"ecohabits-io3bn.firebaseapp.com","projectId":"ecohabits-io3bn","storageBucket":"ecohabits-io3bn.firebasestorage.app","messagingSenderId":"182712685164","appId":"1:182712685164:web:d875402066a24754e27e49"}'
-    availability:
-      - BUILD
-      - RUNTIME
