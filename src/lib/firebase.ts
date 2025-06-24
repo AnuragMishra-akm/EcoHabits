@@ -6,16 +6,14 @@ import { getFirestore } from "firebase/firestore";
 
 let app;
 
-// This single configuration block works for both local and deployed environments.
-// For local: reads from .env
-// For deployed: reads from apphosting.yaml
+// The Firebase configuration is hardcoded here to ensure it's always available.
 const firebaseConfig: FirebaseOptions = {
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+    apiKey: "AIzaSyDwbBNq7AkDGzlwXPOTnIeb_IlvxEZRvT8",
+    authDomain: "ecohabits-io3bn.firebaseapp.com",
+    projectId: "ecohabits-io3bn",
+    storageBucket: "ecohabits-io3bn.appspot.com",
+    messagingSenderId: "182712685164",
+    appId: "1:182712685164:web:d875402066a24754e27e49",
 };
 
 // Initialize Firebase only if it hasn't been initialized yet
