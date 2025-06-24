@@ -23,7 +23,7 @@ env:
       - BUILD
       - RUNTIME
   - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-    value: "ecohabits-io3bn.firebasestorage.app"
+    value: "ecohabits-io3bn.appspot.com"
     availability:
       - BUILD
       - RUNTIME

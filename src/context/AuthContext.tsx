@@ -3,7 +3,7 @@
 
 import React, { createContext, useState, useEffect, useContext, ReactNode, ReactElement } from 'react';
 import { User as FirebaseUser, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, type FieldValue } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, FieldValue } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { fileToDataUri } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -93,10 +93,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         try {
             const userRef = doc(db, 'users', firebaseUser.uid);
-            const updatePayload: { activities: FieldValue } = {
+            // Use a type assertion for the update payload
+            const updatePayload = {
                 activities: arrayUnion(newActivity)
-            };
+            } as { activities: FieldValue };
+            
             await updateDoc(userRef, updatePayload);
+            
+            // Manually update the client-side state
             setUser(prev => prev ? { ...prev, activities: [...prev.activities, newActivity] } : null);
         } catch (error) {
             console.error("Error adding activity:", error);
