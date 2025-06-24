@@ -18,12 +18,6 @@ const firebaseConfig: FirebaseOptions = {
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-
-// A final check to ensure the config object is valid before initializing
-if (!firebaseConfig?.apiKey) {
-  throw new Error("Firebase configuration is missing or incomplete. For local development, ensure your .env file is set up correctly. For deployed environments, check your App Hosting configuration in apphosting.yaml.");
-}
-
 // Initialize Firebase only if it hasn't been initialized yet
 if (!getApps().length) {
     app = initializeApp(firebaseConfig);
