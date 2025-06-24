@@ -7,10 +7,33 @@ runConfig:
   maxInstances: 1
 
 env:
-  # This makes the auto-provisioned Firebase web app config available 
-  # to the client-side Next.js app by re-exporting it with the NEXT_PUBLIC_ prefix.
-  - variable: NEXT_PUBLIC_FIREBASE_CONFIG
-    value: ${FIREBASE_WEBAPP_CONFIG}
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: AIzaSyDwbBNq7AkDGzlwXPOTnIeb_IlvxEZRvT8
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: ecohabits-io3bn.firebaseapp.com
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: ecohabits-io3bn
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: ecohabits-io3bn.firebasestorage.app
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "182712685164"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: 1:182712685164:web:d875402066a24754e27e49
     availability:
       - BUILD
       - RUNTIME
