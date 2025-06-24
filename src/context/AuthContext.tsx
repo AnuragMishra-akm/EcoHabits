@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useState, useEffect, useContext, ReactNode, ReactElement } from 'react';
@@ -79,21 +80,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         return () => unsubscribe();
     }, []);
-
-    const updateUserInFirestore = async (uid: string, data: Partial<UserProfile>) => {
-        if (!uid) return;
-        try {
-            const userRef = doc(db, 'users', uid);
-            await updateDoc(userRef, data);
-            setUser((prev) => (prev ? { ...prev, ...data } : null));
-        } catch (error) {
-            console.error("Error updating user document:", error);
-            toast({ title: "Error", description: "Could not update your profile.", variant: "destructive" });
-        }
-    };
     
     const addActivity = async (activity: Omit<Activity, 'id' | 'date'> & { icon: ReactElement }) => {
-        if (!firebaseUser) return;
+        if (!firebaseUser || !user) return;
         
         const newActivity = {
             ...activity,
@@ -102,16 +91,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             icon: serializeIcon(activity.icon)
         };
         
-        await updateUserInFirestore(firebaseUser.uid, {
-            activities: arrayUnion(newActivity)
-        });
+        try {
+            const userRef = doc(db, 'users', firebaseUser.uid);
+            await updateDoc(userRef, {
+                activities: arrayUnion(newActivity)
+            });
+            setUser(prev => prev ? { ...prev, activities: [...prev.activities, newActivity] } : null);
+        } catch (error) {
+            console.error("Error adding activity:", error);
+            toast({ title: "Error", description: "Could not add activity.", variant: "destructive" });
+        }
     };
 
     const updateAvatar = async (file: File) => {
         if (!firebaseUser) return;
         try {
             const dataUri = await fileToDataUri(file);
-            await updateUserInFirestore(firebaseUser.uid, { avatar: dataUri });
+            const userRef = doc(db, 'users', firebaseUser.uid);
+            await updateDoc(userRef, { avatar: dataUri });
+            setUser(prev => prev ? { ...prev, avatar: dataUri } : null);
             toast({ title: "Avatar Updated", description: "Your new profile picture has been saved." });
         } catch (error) {
             toast({ title: "Upload Failed", description: "Could not upload the image.", variant: "destructive" });
@@ -120,26 +118,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const addPoints = async (amount: number) => {
         if (!firebaseUser || !user) return;
-        const newPoints = (user.points || 0) + amount;
-        await updateUserInFirestore(firebaseUser.uid, { points: newPoints });
+        const newPoints = user.points + amount;
+        try {
+            const userRef = doc(db, 'users', firebaseUser.uid);
+            await updateDoc(userRef, { points: newPoints });
+            setUser(prev => prev ? { ...prev, points: newPoints } : null);
+        } catch (error) {
+            console.error("Error adding points:", error);
+            toast({ title: "Error", description: "Could not update points.", variant: "destructive" });
+        }
     };
 
     const updateImpactScore = async (score: number, pointsToAdd: number) => {
         if (!firebaseUser || !user) return;
         
         const newPoints = user.points + pointsToAdd;
-        await updateUserInFirestore(firebaseUser.uid, { impactScore: score, points: newPoints });
 
-        await addActivity({
-            description: `Calculated a new Impact Score of ${score}.`,
-            icon: <Star className="w-5 h-5 text-primary" />,
-        });
+        try {
+            const userRef = doc(db, 'users', firebaseUser.uid);
+            await updateDoc(userRef, { impactScore: score, points: newPoints });
+            setUser(prev => prev ? { ...prev, impactScore: score, points: newPoints } : null);
 
-        if (pointsToAdd > 0) {
-             await addActivity({
-                description: `Earned ${pointsToAdd} bonus points for a high Impact Score!`,
-                icon: <Gift className="w-5 h-5 text-accent" />,
+            await addActivity({
+                description: `Calculated a new Impact Score of ${score}.`,
+                icon: <Star className="w-5 h-5 text-primary" />,
             });
+
+            if (pointsToAdd > 0) {
+                 await addActivity({
+                    description: `Earned ${pointsToAdd} bonus points for a high Impact Score!`,
+                    icon: <Gift className="w-5 h-5 text-accent" />,
+                });
+            }
+        } catch (error) {
+            console.error("Error updating impact score:", error);
+            toast({ title: "Error", description: "Could not update impact score.", variant: "destructive" });
         }
     };
     
@@ -149,21 +162,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const newPoints = user.points - pointsToDeduct;
         
-        await updateUserInFirestore(firebaseUser.uid, {
-            points: newPoints,
-            claimedRewards: arrayUnion(rewardId)
-        });
+        try {
+            const userRef = doc(db, 'users', firebaseUser.uid);
+            await updateDoc(userRef, {
+                points: newPoints,
+                claimedRewards: arrayUnion(rewardId)
+            });
+            setUser(prev => prev ? { ...prev, points: newPoints, claimedRewards: [...prev.claimedRewards, rewardId] } : null);
 
-         await addActivity({
-            description: `Redeemed a reward for ${pointsToDeduct} points.`,
-            icon: <Gift className="w-5 h-5 text-accent" />,
-        });
+             await addActivity({
+                description: `Redeemed a reward for ${pointsToDeduct} points.`,
+                icon: <Gift className="w-5 h-5 text-accent" />,
+            });
+        } catch(error) {
+            console.error("Error redeeming reward:", error);
+            toast({ title: "Error", description: "Could not redeem reward.", variant: "destructive" });
+        }
     };
 
 
     const completeOnboarding = async () => {
         if (!firebaseUser) return;
-        await updateUserInFirestore(firebaseUser.uid, { hasOnboarded: true });
+        try {
+            const userRef = doc(db, 'users', firebaseUser.uid);
+            await updateDoc(userRef, { hasOnboarded: true });
+            setUser(prev => prev ? { ...prev, hasOnboarded: true } : null);
+        } catch (error) {
+            console.error("Error completing onboarding:", error);
+            toast({ title: "Error", description: "Could not complete onboarding.", variant: "destructive" });
+        }
     };
 
     const value = {
