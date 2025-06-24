@@ -38,7 +38,7 @@ export default function SignupPage() {
       name: "",
       email: "",
       password: "",
-      countryCode: "+91",
+      countryCode: "IN",
       mobileNumber: "",
     },
   });
@@ -49,12 +49,15 @@ export default function SignupPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
 
+      const selectedCountry = countries.find(c => c.code === values.countryCode);
+      const dialCode = selectedCountry ? selectedCountry.dial_code : '';
+
       // Create user document in Firestore
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         name: values.name,
         email: values.email,
-        mobile: `${values.countryCode}${values.mobileNumber}`,
+        mobile: `${dialCode}${values.mobileNumber}`,
         avatar: `https://placehold.co/100x100.png?text=${values.name.charAt(0)}`,
         points: 0,
         impactScore: 0,
@@ -140,7 +143,7 @@ export default function SignupPage() {
                         </FormControl>
                         <SelectContent>
                             {countries.map((country) => (
-                            <SelectItem key={country.code} value={country.dial_code}>
+                            <SelectItem key={country.code} value={country.code}>
                                 {country.dial_code}
                             </SelectItem>
                             ))}
