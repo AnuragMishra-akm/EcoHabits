@@ -37,6 +37,7 @@ interface AuthContextType {
     firebaseUser: FirebaseUser | null;
     loading: boolean;
     updateAvatar: (file: File) => Promise<void>;
+    updateName: (newName: string) => Promise<void>;
     addPoints: (amount: number) => Promise<void>;
     addActivity: (activity: Omit<Activity, 'id' | 'date'> & { icon: ReactElement }) => Promise<void>;
     completeOnboarding: () => Promise<void>;
@@ -143,6 +144,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const updateName = async (newName: string) => {
+        if (!firebaseUser) return;
+        if (newName.trim().length < 2) {
+            toast({
+                title: "Invalid Name",
+                description: "Name must be at least 2 characters.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        try {
+            const userRef = doc(db, 'users', firebaseUser.uid);
+            await updateDoc(userRef, { name: newName });
+            setUser(prev => prev ? { ...prev, name: newName } : null);
+            toast({ title: "Name Updated", description: "Your name has been successfully updated." });
+        } catch (error) {
+            console.error("Error updating name:", error);
+            toast({ title: "Update Failed", description: "Could not update your name.", variant: "destructive" });
+        }
+    };
+
     const addPoints = async (amount: number) => {
         if (!firebaseUser || !user) return;
         const newPoints = user.points + amount;
@@ -226,6 +249,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         firebaseUser,
         loading,
         updateAvatar,
+        updateName,
         addPoints,
         addActivity,
         completeOnboarding,

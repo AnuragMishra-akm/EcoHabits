@@ -5,7 +5,8 @@ import * as Lucide from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { LogOut, Settings, Award, Trophy, Gift, Upload, Star } from "lucide-react";
+import { LogOut, Settings, Award, Trophy, Gift, Upload, Star, Pencil, Check, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { challenges } from "@/lib/challenges-data";
 import Link from "next/link";
@@ -32,12 +33,14 @@ const DeserializeIcon = ({ icon }: { icon: Activity['icon'] }) => {
 
 
 export default function ProfilePage() {
-  const { user, updateAvatar } = useAuth();
+  const { user, updateAvatar, updateName } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   const inputFileRef = useRef<HTMLInputElement>(null);
   const ongoingChallenges = challenges.slice(0, 2);
 
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [newName, setNewName] = useState('');
   const [formattedActivities, setFormattedActivities] = useState<({description: string, id: string, date: string, icon: Activity['icon']})[]>([]);
 
   const sortedActivities = useMemo(() => {
@@ -46,12 +49,15 @@ export default function ProfilePage() {
   }, [user?.activities]);
 
   useEffect(() => {
+    if (user) {
+      setNewName(user.name);
+    }
     const newFormattedActivities = sortedActivities.slice(0, 5).map(activity => ({
       ...activity,
       date: new Date(activity.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
     }));
     setFormattedActivities(newFormattedActivities);
-  }, [sortedActivities]);
+  }, [user, sortedActivities]);
 
 
   const handleAvatarClick = () => {
@@ -73,6 +79,18 @@ export default function ProfilePage() {
     } catch (error) {
       toast({ title: "Logout Failed", description: "Could not log you out. Please try again.", variant: "destructive" });
     }
+  };
+
+  const handleSaveName = async () => {
+    if (newName.trim() && newName !== user?.name) {
+      await updateName(newName.trim());
+    }
+    setIsEditingName(false);
+  };
+  
+  const handleCancelEdit = () => {
+    if (user) setNewName(user.name);
+    setIsEditingName(false);
   };
   
   if (!user) {
@@ -114,7 +132,30 @@ export default function ProfilePage() {
                     accept="image/*"
                   />
                 </div>
-                <CardTitle>{user.name}</CardTitle>
+                {!isEditingName ? (
+                  <div className="flex items-center gap-2">
+                    <CardTitle>{user.name}</CardTitle>
+                    <Button variant="ghost" size="icon" className="w-6 h-6 rounded-full" onClick={() => setIsEditingName(true)}>
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center w-full max-w-sm gap-2">
+                    <Input 
+                      value={newName} 
+                      onChange={(e) => setNewName(e.target.value)} 
+                      className="h-9 text-xl font-semibold text-center"
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') handleCancelEdit()}}
+                      autoFocus
+                    />
+                    <Button variant="outline" size="icon" className="w-9 h-9" onClick={handleSaveName}>
+                      <Check className="w-4 h-4 text-green-600" />
+                    </Button>
+                    <Button variant="outline" size="icon" className="w-9 h-9" onClick={handleCancelEdit}>
+                      <X className="w-4 h-4 text-red-600" />
+                    </Button>
+                  </div>
+                )}
                 <CardDescription className="w-full truncate">{user.email}</CardDescription>
               </CardHeader>
               <CardContent className="grid grid-cols-2 gap-4 text-center">
