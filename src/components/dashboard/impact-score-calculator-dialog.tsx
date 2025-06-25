@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, type ReactNode, useMemo, useEffect } from "react";
@@ -79,10 +80,10 @@ export function ImpactScoreCalculatorDialog({ children }: { children: ReactNode 
   const handleSubmit = async (data: FormValues) => {
     setStage('calculating');
 
-    const answersForApi = questions.reduce((acc, question) => {
+    const answersForApi = questions.reduce((acc: Record<string, string>, question) => {
         acc[question.text] = data[question.id];
         return acc;
-    }, {} as Record<string, string>);
+    }, {});
 
     try {
       const analysisResult = await calculateImpactScore({ answers: answersForApi });
