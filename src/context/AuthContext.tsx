@@ -3,7 +3,7 @@
 
 import React, { createContext, useState, useEffect, useContext, ReactNode, ReactElement } from 'react';
 import { User as FirebaseUser, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, FieldValue } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, FieldValue, runTransaction } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { fileToDataUri } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -180,47 +180,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const updateImpactScore = async (score: number, pointsToAdd: number) => {
-        if (!firebaseUser || !user) return;
-
-        const newPoints = user.points + pointsToAdd;
-
-        const scoreActivity = {
-            id: new Date().getTime().toString() + '-score',
-            date: new Date().toISOString(),
-            description: `Calculated a new Impact Score of ${score}.`,
-            icon: serializeIcon(<Star className="w-5 h-5 text-primary" />),
-        };
-
-        const activitiesToAdd: Activity[] = [scoreActivity];
-
-        if (pointsToAdd > 0) {
-            const pointsActivity = {
-                id: new Date().getTime().toString() + '-points',
-                date: new Date().toISOString(),
-                description: `Earned ${pointsToAdd} bonus points for a high Impact Score!`,
-                icon: serializeIcon(<Gift className="w-5 h-5 text-accent" />),
-            };
-            activitiesToAdd.push(pointsActivity);
-        }
+        if (!firebaseUser) return;
+        const userRef = doc(db, 'users', firebaseUser.uid);
 
         try {
-            const userRef = doc(db, 'users', firebaseUser.uid);
-            await updateDoc(userRef, {
-                impactScore: score,
-                points: newPoints,
-                activities: arrayUnion(...activitiesToAdd)
+            await runTransaction(db, async (transaction) => {
+                const userDoc = await transaction.get(userRef);
+                if (!userDoc.exists()) {
+                    throw "Document does not exist!";
+                }
+                
+                const userData = userDoc.data() as UserProfile;
+                const newPoints = (userData.points || 0) + pointsToAdd;
+                
+                const activitiesToCreate = [];
+                activitiesToCreate.push({
+                    id: new Date().getTime().toString() + '-score',
+                    date: new Date().toISOString(),
+                    description: `Calculated a new Impact Score of ${score}.`,
+                    icon: serializeIcon(<Star className="w-5 h-5 text-primary" />),
+                });
+    
+                if (pointsToAdd > 0) {
+                     activitiesToCreate.push({
+                        id: new Date().getTime().toString() + '-points',
+                        date: new Date().toISOString(),
+                        description: `Earned ${pointsToAdd} bonus points for a high Impact Score!`,
+                        icon: serializeIcon(<Gift className="w-5 h-5 text-accent" />),
+                    });
+                }
+                
+                const newActivities = [...(userData.activities || []), ...activitiesToCreate];
+    
+                transaction.update(userRef, { 
+                    impactScore: score,
+                    points: newPoints,
+                    activities: newActivities
+                });
             });
-
-            setUser(prev => prev ? { 
-                ...prev, 
-                impactScore: score, 
-                points: newPoints,
-                activities: [...prev.activities, ...activitiesToAdd]
-            } : null);
-
+    
+            const updatedUserDoc = await getDoc(userRef);
+            if (updatedUserDoc.exists()) {
+                setUser(updatedUserDoc.data() as UserProfile);
+            }
+    
         } catch (error) {
-            console.error("Error updating impact score:", error);
-            toast({ title: "Error", description: "Could not update impact score.", variant: "destructive" });
+            console.error("Error updating impact score in transaction:", error);
+            toast({ title: "Error", description: "Could not add impact score.", variant: "destructive" });
         }
     };
     
@@ -276,7 +282,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-      <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+        <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
     );
 }
 
