@@ -1,7 +1,7 @@
 import { config } from 'dotenv';
 config();
 
-import '@/ai/flows/carbon-comparison-insights.ts';
-import '@/ai/flows/ocr-receipt-carbon-footprint.ts';
-import '@/ai/flows/suggest-eco-friendly-alternatives.ts';
-import '@/ai/flows/calculate-impact-score.ts';
+import '@/ai/flows/carbon-comparison-insights';
+import '@/ai/flows/ocr-receipt-carbon-footprint';
+import '@/ai/flows/suggest-eco-friendly-alternatives';
+import '@/ai/flows/calculate-impact-score';
