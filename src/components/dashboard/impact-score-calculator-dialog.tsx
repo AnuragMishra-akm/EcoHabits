@@ -19,7 +19,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { calculateImpactScore, type ImpactScoreOutput } from "@/ai/flows/calculate-impact-score";
 import { LoaderCircle, Sparkles, Lightbulb, Star } from "lucide-react";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useAuth } from "@/context/AuthContext";
 
 const formSchema = z.object({
@@ -104,20 +104,23 @@ export function ImpactScoreCalculatorDialog({ children }: { children: ReactNode 
                 render={({ field }) => (
                     <FormItem>
                         <FormLabel>How do you primarily commute?</FormLabel>
-                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-2 gap-2">
-                           <Label className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-accent has-[[data-state=checked]]:bg-accent">
-                                <RadioGroupItem value="Bike/Walk" /> Bike / Walk
-                            </Label>
-                             <Label className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-accent has-[[data-state=checked]]:bg-accent">
-                                <RadioGroupItem value="Public Transport" /> Public Transport
-                            </Label>
-                             <Label className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-accent has-[[data-state=checked]]:bg-accent">
-                                <RadioGroupItem value="Electric Vehicle" /> Electric Vehicle
-                            </Label>
-                             <Label className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-accent has-[[data-state=checked]]:bg-accent">
-                                <RadioGroupItem value="Gasoline Car" /> Gasoline Car
-                            </Label>
-                        </RadioGroup>
+                        <FormControl>
+                            <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-2 gap-2">
+                               <Label className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-accent has-[[data-state=checked]]:bg-accent">
+                                    <RadioGroupItem value="Bike/Walk" /> Bike / Walk
+                                </Label>
+                                 <Label className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-accent has-[[data-state=checked]]:bg-accent">
+                                    <RadioGroupItem value="Public Transport" /> Public Transport
+                                </Label>
+                                 <Label className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-accent has-[[data-state=checked]]:bg-accent">
+                                    <RadioGroupItem value="Electric Vehicle" /> Electric Vehicle
+                                </Label>
+                                 <Label className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-accent has-[[data-state=checked]]:bg-accent">
+                                    <RadioGroupItem value="Gasoline Car" /> Gasoline Car
+                                </Label>
+                            </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
                     </FormItem>
                 )}
               />
@@ -127,20 +130,23 @@ export function ImpactScoreCalculatorDialog({ children }: { children: ReactNode 
                 render={({ field }) => (
                     <FormItem>
                         <FormLabel>How often do you eat red meat?</FormLabel>
-                         <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-2 gap-2">
-                           <Label className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-accent has-[[data-state=checked]]:bg-accent">
-                                <RadioGroupItem value="Never" /> Never
-                            </Label>
-                             <Label className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-accent has-[[data-state=checked]]:bg-accent">
-                                <RadioGroupItem value="Rarely" /> Rarely
-                            </Label>
-                             <Label className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-accent has-[[data-state=checked]]:bg-accent">
-                                <RadioGroupItem value="Weekly" /> Weekly
-                            </Label>
-                             <Label className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-accent has-[[data-state=checked]]:bg-accent">
-                                <RadioGroupItem value="Daily" /> Daily
-                            </Label>
-                        </RadioGroup>
+                        <FormControl>
+                            <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-2 gap-2">
+                               <Label className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-accent has-[[data-state=checked]]:bg-accent">
+                                    <RadioGroupItem value="Never" /> Never
+                                </Label>
+                                 <Label className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-accent has-[[data-state=checked]]:bg-accent">
+                                    <RadioGroupItem value="Rarely" /> Rarely
+                                </Label>
+                                 <Label className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-accent has-[[data-state=checked]]:bg-accent">
+                                    <RadioGroupItem value="Weekly" /> Weekly
+                                </Label>
+                                 <Label className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-accent has-[[data-state=checked]]:bg-accent">
+                                    <RadioGroupItem value="Daily" /> Daily
+                                </Label>
+                            </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
                     </FormItem>
                 )}
               />
@@ -150,17 +156,20 @@ export function ImpactScoreCalculatorDialog({ children }: { children: ReactNode 
                 render={({ field }) => (
                     <FormItem>
                         <FormLabel>What is your primary household energy source?</FormLabel>
-                          <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-2 gap-2">
-                           <Label className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-accent has-[[data-state=checked]]:bg-accent">
-                                <RadioGroupItem value="Renewable (Solar/Wind)" /> Renewable
-                            </Label>
-                             <Label className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-accent has-[[data-state=checked]]:bg-accent">
-                                <RadioGroupItem value="Mixed Source" /> Mixed Source
-                            </Label>
-                             <Label className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-accent has-[[data-state=checked]]:bg-accent">
-                                <RadioGroupItem value="Grid (Non-renewable)" /> Non-renewable
-                            </Label>
-                        </RadioGroup>
+                        <FormControl>
+                            <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-2 gap-2">
+                               <Label className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-accent has-[[data-state=checked]]:bg-accent">
+                                    <RadioGroupItem value="Renewable (Solar/Wind)" /> Renewable
+                                </Label>
+                                 <Label className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-accent has-[[data-state=checked]]:bg-accent">
+                                    <RadioGroupItem value="Mixed Source" /> Mixed Source
+                                </Label>
+                                 <Label className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-accent has-[[data-state=checked]]:bg-accent">
+                                    <RadioGroupItem value="Grid (Non-renewable)" /> Non-renewable
+                                </Label>
+                            </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
                     </FormItem>
                 )}
               />
