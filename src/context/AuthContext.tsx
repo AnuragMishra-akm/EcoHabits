@@ -186,10 +186,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     throw new Error("Document does not exist!");
                 }
 
-                const currentData = userDoc.data();
-                const currentPoints = currentData.points || 0;
-                const currentActivities = currentData.activities || [];
-
+                const currentPoints = userDoc.data().points || 0;
                 const newPoints = currentPoints + pointsToAdd;
 
                 const scoreActivity = {
@@ -198,23 +195,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     description: `Calculated a new Impact Score of ${score}.`,
                     icon: serializeIcon(<Star className="w-5 h-5 text-primary" />),
                 };
+                
+                const activitiesToAdd = [scoreActivity];
 
-                const bonusActivity = pointsToAdd > 0 ? {
-                    id: new Date().getTime().toString() + '-points',
-                    date: new Date().toISOString(),
-                    description: `Earned ${pointsToAdd} bonus points for a high Impact Score!`,
-                    icon: serializeIcon(<Gift className="w-5 h-5 text-accent" />),
-                } : null;
-
-                const newActivities = [...currentActivities, scoreActivity];
-                if (bonusActivity) {
-                    newActivities.push(bonusActivity);
+                if (pointsToAdd > 0) {
+                     const bonusActivity = {
+                        id: new Date().getTime().toString() + '-points',
+                        date: new Date().toISOString(),
+                        description: `Earned ${pointsToAdd} bonus points for a high Impact Score!`,
+                        icon: serializeIcon(<Gift className="w-5 h-5 text-accent" />),
+                    };
+                    activitiesToAdd.push(bonusActivity);
                 }
                 
                 transaction.update(userRef, {
                     impactScore: score,
                     points: newPoints,
-                    activities: newActivities,
+                    activities: arrayUnion(...activitiesToAdd),
                     lastImpactScoreCalc: new Date().toISOString(),
                 });
             });
@@ -279,7 +276,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         redeemReward
     };
 
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    return (
+        <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+    );
 }
 
 export function useAuth() {
