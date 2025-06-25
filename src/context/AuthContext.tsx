@@ -1,13 +1,12 @@
 
 "use client";
 
-import React, { createContext, useState, useEffect, useContext, ReactNode, ReactElement } from 'react';
+import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { User as FirebaseUser, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, FieldValue, increment } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { fileToDataUri } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { Star, Gift } from 'lucide-react';
 
 export interface UserProfile {
     uid: string;
@@ -27,8 +26,8 @@ export interface Activity {
     description: string;
     date: string;
     icon: {
-        type: string;
-        props: any;
+        name: string;
+        variant: 'primary' | 'accent' | 'default';
     };
 }
 
@@ -39,21 +38,13 @@ interface AuthContextType {
     updateAvatar: (file: File) => Promise<void>;
     updateName: (newName: string) => Promise<void>;
     addPoints: (amount: number) => Promise<void>;
-    addActivity: (activity: Omit<Activity, 'id' | 'date'> & { icon: ReactElement }) => Promise<void>;
+    addActivity: (activity: Omit<Activity, 'id' | 'date'>) => Promise<void>;
     completeOnboarding: () => Promise<void>;
     updateImpactScore: (score: number, pointsToAdd: number) => Promise<void>;
     redeemReward: (rewardId: string, pointsToDeduct: number) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// Helper to serialize React element for Firestore
-const serializeIcon = (icon: ReactElement) => {
-    return {
-        type: (icon.type as any).name,
-        props: icon.props,
-    };
-};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
@@ -100,23 +91,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return () => unsubscribe();
     }, [toast]);
     
-    const addActivity = async (activity: Omit<Activity, 'id' | 'date'> & { icon: ReactElement }) => {
+    const addActivity = async (activity: Omit<Activity, 'id' | 'date'>) => {
         if (!firebaseUser || !user) return;
         
         const newActivity = {
             ...activity,
             id: new Date().getTime().toString(),
             date: new Date().toISOString(),
-            icon: serializeIcon(activity.icon)
         };
         
         try {
             const userRef = doc(db, 'users', firebaseUser.uid);
-            const updatePayload = {
+            await updateDoc(userRef, {
                 activities: arrayUnion(newActivity)
-            } as { activities: FieldValue };
-            
-            await updateDoc(userRef, updatePayload);
+            });
             
             setUser(prev => prev ? { ...prev, activities: [...prev.activities, newActivity] } : null);
         } catch (error) {
@@ -177,14 +165,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!firebaseUser) return;
         try {
             const userRef = doc(db, 'users', firebaseUser.uid);
-    
-            // Prepare the new activity entries
             const newTimestamp = new Date().toISOString();
+            
             const scoreActivity = {
                 id: `${Date.now()}-score`,
                 date: newTimestamp,
                 description: `Calculated a new Impact Score of ${score}.`,
-                icon: serializeIcon(<Star className="w-5 h-5 text-primary" />),
+                icon: { name: "Star", variant: 'primary' as const },
             };
             
             const newActivities = [scoreActivity];
@@ -193,23 +180,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     id: `${Date.now()}-points`,
                     date: newTimestamp,
                     description: `Earned ${pointsToAdd} bonus points for a high Impact Score!`,
-                    icon: serializeIcon(<Gift className="w-5 h-5 text-accent" />),
+                    icon: { name: "Gift", variant: 'accent' as const },
                 };
                 newActivities.push(bonusActivity);
             }
-    
-            // Prepare the data payload for an atomic update.
-            // The key is to SPREAD the newActivities into arrayUnion.
-            const updatePayload: { impactScore: number, points: FieldValue, activities: FieldValue } = {
+            
+            const updatePayload: { [key: string]: any } = {
                 impactScore: score,
                 points: increment(pointsToAdd),
                 activities: arrayUnion(...newActivities),
             };
     
-            // Atomically update the document in Firestore.
-            await updateDoc(userRef, updatePayload as any);
-    
-            // If the database update is successful, update the local state to match.
+            await updateDoc(userRef, updatePayload);
+            
             setUser(prev => {
                 if (!prev) return null;
                 return {
@@ -247,7 +230,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
              await addActivity({
                 description: `Redeemed a reward for ${pointsToDeduct} points.`,
-                icon: <Gift className="w-5 h-5 text-accent" />,
+                icon: { name: "Gift", variant: 'accent' },
             });
         } catch(error) {
             console.error("Error redeeming reward:", error);

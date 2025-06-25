@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useRef, useMemo, useState, useEffect } from "react";
@@ -16,6 +17,7 @@ import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 const iconMap: { [key: string]: React.ElementType } = {
   Trophy: Lucide.Trophy,
@@ -25,10 +27,20 @@ const iconMap: { [key: string]: React.ElementType } = {
 };
 
 const DeserializeIcon = ({ icon }: { icon: Activity['icon'] }) => {
-  if (!icon || !icon.type) return <Lucide.HelpCircle className="w-5 h-5 text-muted-foreground" />;
-  const IconComponent = iconMap[icon.type];
+  if (!icon || !icon.name) return <Lucide.HelpCircle className="w-5 h-5 text-muted-foreground" />;
+  
+  const IconComponent = iconMap[icon.name];
   if (!IconComponent) return <Lucide.HelpCircle className="w-5 h-5 text-muted-foreground" />;
-  return <IconComponent {...icon.props} />;
+
+  const variantClasses = {
+    primary: 'text-primary',
+    accent: 'text-accent',
+    default: 'text-muted-foreground'
+  };
+  
+  const className = cn("w-5 h-5", variantClasses[icon.variant || 'default']);
+
+  return <IconComponent className={className} />;
 };
 
 

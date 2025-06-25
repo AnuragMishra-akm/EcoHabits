@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Header } from "@/components/dashboard/header";
@@ -8,7 +9,6 @@ import { ActionsCard } from "@/components/dashboard/actions-card";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/AuthContext";
 import type { AnalyzeReceiptOutput } from "@/ai/flows/ocr-receipt-carbon-footprint";
-import { ReceiptText } from "lucide-react";
 
 export default function Home() {
   const { user, addPoints, addActivity } = useAuth();
@@ -18,7 +18,7 @@ export default function Home() {
       addPoints(result.ecoPointsAwarded);
       addActivity({
         description: `Scanned a receipt and earned ${result.ecoPointsAwarded} points.`,
-        icon: <ReceiptText className="w-5 h-5 text-primary" />,
+        icon: { name: "ReceiptText", variant: 'primary' },
       });
     }
   };
