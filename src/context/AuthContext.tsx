@@ -3,7 +3,7 @@
 
 import React, { createContext, useState, useEffect, useContext, ReactNode, ReactElement } from 'react';
 import { User as FirebaseUser, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, FieldValue, runTransaction, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, FieldValue, increment } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { fileToDataUri } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -20,7 +20,6 @@ export interface UserProfile {
     impactScore: number;
     activities: Activity[];
     claimedRewards: string[];
-    lastImpactScoreCalc?: string; // ISO string
 }
 
 export interface Activity {
@@ -81,7 +80,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         impactScore: 0,
                         activities: [],
                         claimedRewards: [],
-                        lastImpactScoreCalc: undefined,
                     };
                     try {
                         await setDoc(doc(db, "users", authUser.uid), newUserProfile);
@@ -178,9 +176,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const updateImpactScore = async (score: number, pointsToAdd: number) => {
         if (!firebaseUser || !user) return;
         const userRef = doc(db, 'users', firebaseUser.uid);
-
-        // Prepare new activities and timestamp outside the transaction
         const newTimestamp = new Date().toISOString();
+
         const scoreActivity = {
             id: new Date().getTime().toString() + '-score',
             date: newTimestamp,
@@ -200,31 +197,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         try {
-            let newPoints = 0;
-
-            await runTransaction(db, async (transaction) => {
-                const userDoc = await transaction.get(userRef);
-                if (!userDoc.exists()) {
-                    throw new Error("Document does not exist!");
-                }
-                const currentPoints = userDoc.data().points || 0;
-                newPoints = currentPoints + pointsToAdd;
-                
-                transaction.update(userRef, {
-                    impactScore: score,
-                    points: newPoints,
-                    activities: arrayUnion(...activitiesToAdd),
-                    lastImpactScoreCalc: newTimestamp,
-                });
+            await updateDoc(userRef, {
+                impactScore: score,
+                points: increment(pointsToAdd),
+                activities: arrayUnion(...activitiesToAdd),
             });
 
-            // If transaction succeeds, update local state with the calculated values
+            // If update succeeds, update local state
             const updatedUser: UserProfile = {
                 ...user,
                 impactScore: score,
-                points: newPoints,
-                activities: [...user.activities, ...activitiesToAdd],
-                lastImpactScoreCalc: newTimestamp,
+                points: (user.points || 0) + pointsToAdd,
+                activities: [...(user.activities || []), ...activitiesToAdd],
             };
             setUser(updatedUser);
 

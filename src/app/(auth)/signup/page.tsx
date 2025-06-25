@@ -63,7 +63,6 @@ export default function SignupPage() {
         activities: [],
         claimedRewards: [],
         hasOnboarded: false,
-        lastImpactScoreCalc: null,
       });
 
       router.push("/onboarding");
