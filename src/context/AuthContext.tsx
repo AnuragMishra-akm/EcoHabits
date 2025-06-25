@@ -176,53 +176,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const updateImpactScore = async (score: number, pointsToAdd: number) => {
-        if (!firebaseUser) return;
+        if (!firebaseUser || !user) return;
         const userRef = doc(db, 'users', firebaseUser.uid);
 
+        // Prepare new activities and timestamp outside the transaction
+        const newTimestamp = new Date().toISOString();
+        const scoreActivity = {
+            id: new Date().getTime().toString() + '-score',
+            date: newTimestamp,
+            description: `Calculated a new Impact Score of ${score}.`,
+            icon: serializeIcon(<Star className="w-5 h-5 text-primary" />),
+        };
+        
+        const activitiesToAdd = [scoreActivity];
+        if (pointsToAdd > 0) {
+            const bonusActivity = {
+                id: new Date().getTime().toString() + '-points',
+                date: newTimestamp,
+                description: `Earned ${pointsToAdd} bonus points for a high Impact Score!`,
+                icon: serializeIcon(<Gift className="w-5 h-5 text-accent" />),
+            };
+            activitiesToAdd.push(bonusActivity);
+        }
+
         try {
+            let newPoints = 0;
+
             await runTransaction(db, async (transaction) => {
                 const userDoc = await transaction.get(userRef);
                 if (!userDoc.exists()) {
                     throw new Error("Document does not exist!");
                 }
-
                 const currentPoints = userDoc.data().points || 0;
-                const newPoints = currentPoints + pointsToAdd;
-
-                const scoreActivity = {
-                    id: new Date().getTime().toString() + '-score',
-                    date: new Date().toISOString(),
-                    description: `Calculated a new Impact Score of ${score}.`,
-                    icon: serializeIcon(<Star className="w-5 h-5 text-primary" />),
-                };
-                
-                const activitiesToAdd = [scoreActivity];
-
-                if (pointsToAdd > 0) {
-                     const bonusActivity = {
-                        id: new Date().getTime().toString() + '-points',
-                        date: new Date().toISOString(),
-                        description: `Earned ${pointsToAdd} bonus points for a high Impact Score!`,
-                        icon: serializeIcon(<Gift className="w-5 h-5 text-accent" />),
-                    };
-                    activitiesToAdd.push(bonusActivity);
-                }
+                newPoints = currentPoints + pointsToAdd;
                 
                 transaction.update(userRef, {
                     impactScore: score,
                     points: newPoints,
                     activities: arrayUnion(...activitiesToAdd),
-                    lastImpactScoreCalc: new Date().toISOString(),
+                    lastImpactScoreCalc: newTimestamp,
                 });
             });
 
-            const updatedUserDoc = await getDoc(userRef);
-            if (updatedUserDoc.exists()) {
-                setUser(updatedUserDoc.data() as UserProfile);
-            }
+            // If transaction succeeds, update local state with the calculated values
+            const updatedUser: UserProfile = {
+                ...user,
+                impactScore: score,
+                points: newPoints,
+                activities: [...user.activities, ...activitiesToAdd],
+                lastImpactScoreCalc: newTimestamp,
+            };
+            setUser(updatedUser);
+
         } catch (error) {
-            console.error("Error updating impact score in transaction:", error);
-            toast({ title: "Error", description: "Could not update your impact score. Please try again.", variant: "destructive" });
+            console.error("Error updating impact score:", error);
+            toast({ title: "Could not add impact score", description: "There was a problem saving your score. Please try again later.", variant: "destructive" });
         }
     };
     
