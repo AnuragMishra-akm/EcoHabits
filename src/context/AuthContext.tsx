@@ -3,7 +3,7 @@
 
 import React, { createContext, useState, useEffect, useContext, ReactNode, ReactElement } from 'react';
 import { User as FirebaseUser, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, FieldValue, runTransaction } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, FieldValue, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { fileToDataUri } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -20,6 +20,7 @@ export interface UserProfile {
     impactScore: number;
     activities: Activity[];
     claimedRewards: string[];
+    lastImpactScoreCalc?: string; // ISO string
 }
 
 export interface Activity {
@@ -69,9 +70,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 if (userDoc.exists()) {
                     setUser(userDoc.data() as UserProfile);
                 } else {
-                    // This handles cases where a user is authenticated in Firebase Auth
-                    // but their profile document doesn't exist in Firestore (e.g., interrupted signup).
-                    // We create a new profile to allow them to proceed to onboarding.
                     console.warn("User document not found. Creating a new profile.");
                     const newUserProfile: UserProfile = {
                         uid: authUser.uid,
@@ -83,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         impactScore: 0,
                         activities: [],
                         claimedRewards: [],
+                        lastImpactScoreCalc: undefined,
                     };
                     try {
                         await setDoc(doc(db, "users", authUser.uid), newUserProfile);
@@ -90,7 +89,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     } catch (error) {
                         console.error("Failed to create recovery user profile:", error);
                         toast({ title: "Login Error", description: "Could not retrieve or create your user profile.", variant: "destructive" });
-                        // If we fail here, we can't proceed. Log them out.
                         await auth.signOut();
                     }
                 }
@@ -116,14 +114,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         try {
             const userRef = doc(db, 'users', firebaseUser.uid);
-            // Use a type assertion for the update payload
             const updatePayload = {
                 activities: arrayUnion(newActivity)
             } as { activities: FieldValue };
             
             await updateDoc(userRef, updatePayload);
             
-            // Manually update the client-side state
             setUser(prev => prev ? { ...prev, activities: [...prev.activities, newActivity] } : null);
         } catch (error) {
             console.error("Error adding activity:", error);
@@ -187,46 +183,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await runTransaction(db, async (transaction) => {
                 const userDoc = await transaction.get(userRef);
                 if (!userDoc.exists()) {
-                    throw "Document does not exist!";
+                    throw new Error("Document does not exist!");
                 }
-                
-                const userData = userDoc.data() as UserProfile;
-                const newPoints = (userData.points || 0) + pointsToAdd;
-                
-                const activitiesToCreate = [];
-                activitiesToCreate.push({
+
+                const currentData = userDoc.data();
+                const currentPoints = currentData.points || 0;
+                const currentActivities = currentData.activities || [];
+
+                const newPoints = currentPoints + pointsToAdd;
+
+                const scoreActivity = {
                     id: new Date().getTime().toString() + '-score',
                     date: new Date().toISOString(),
                     description: `Calculated a new Impact Score of ${score}.`,
                     icon: serializeIcon(<Star className="w-5 h-5 text-primary" />),
-                });
-    
-                if (pointsToAdd > 0) {
-                     activitiesToCreate.push({
-                        id: new Date().getTime().toString() + '-points',
-                        date: new Date().toISOString(),
-                        description: `Earned ${pointsToAdd} bonus points for a high Impact Score!`,
-                        icon: serializeIcon(<Gift className="w-5 h-5 text-accent" />),
-                    });
+                };
+
+                const bonusActivity = pointsToAdd > 0 ? {
+                    id: new Date().getTime().toString() + '-points',
+                    date: new Date().toISOString(),
+                    description: `Earned ${pointsToAdd} bonus points for a high Impact Score!`,
+                    icon: serializeIcon(<Gift className="w-5 h-5 text-accent" />),
+                } : null;
+
+                const newActivities = [...currentActivities, scoreActivity];
+                if (bonusActivity) {
+                    newActivities.push(bonusActivity);
                 }
                 
-                const newActivities = [...(userData.activities || []), ...activitiesToCreate];
-    
-                transaction.update(userRef, { 
+                transaction.update(userRef, {
                     impactScore: score,
                     points: newPoints,
-                    activities: newActivities
+                    activities: newActivities,
+                    lastImpactScoreCalc: new Date().toISOString(),
                 });
             });
-    
+
             const updatedUserDoc = await getDoc(userRef);
             if (updatedUserDoc.exists()) {
                 setUser(updatedUserDoc.data() as UserProfile);
             }
-    
         } catch (error) {
             console.error("Error updating impact score in transaction:", error);
-            toast({ title: "Error", description: "Could not add impact score.", variant: "destructive" });
+            toast({ title: "Error", description: "Could not update your impact score. Please try again.", variant: "destructive" });
         }
     };
     
@@ -255,7 +254,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
-
     const completeOnboarding = async () => {
         if (!firebaseUser) return;
         try {
@@ -281,9 +279,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         redeemReward
     };
 
-    return (
-        <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-    );
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
