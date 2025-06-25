@@ -23,7 +23,7 @@ const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Invalid email address." }),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
-  countryCode: z.string().min(1, { message: "Country code is required." }),
+  countryCode: z.string().min(1, { message: "Please select a country code." }),
   mobileNumber: z.string().min(10, { message: "Mobile number must be at least 10 digits." }),
 });
 
@@ -52,7 +52,6 @@ export default function SignupPage() {
       const selectedCountry = countries.find(c => c.code === values.countryCode);
       const dialCode = selectedCountry ? selectedCountry.dial_code : '';
 
-      // Create user document in Firestore
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         name: values.name,
@@ -68,10 +67,11 @@ export default function SignupPage() {
 
       router.push("/onboarding");
     } catch (error: any) {
+      console.error("Signup failed:", error);
       toast({
         variant: "destructive",
         title: "Signup Failed",
-        description: error.message || "An unexpected error occurred.",
+        description: error.message || "An unexpected error occurred. Please check your details and try again.",
       });
     } finally {
       setIsLoading(false);
@@ -128,41 +128,46 @@ export default function SignupPage() {
                 </FormItem>
               )}
             />
-            <FormItem>
+            <div className="space-y-2">
                 <FormLabel>Mobile Number</FormLabel>
                 <div className="flex gap-2">
                     <FormField
-                    control={form.control}
-                    name="countryCode"
-                    render={({ field }) => (
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                            <SelectTrigger className="w-[80px]" suppressHydrationWarning>
-                                <SelectValue placeholder="Code" />
-                            </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            {countries.map((country) => (
-                            <SelectItem key={country.code} value={country.code}>
-                                {country.dial_code}
-                            </SelectItem>
-                            ))}
-                        </SelectContent>
-                        </Select>
-                    )}
+                      control={form.control}
+                      name="countryCode"
+                      render={({ field }) => (
+                        <FormItem className="w-[100px]">
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger suppressHydrationWarning>
+                                  <SelectValue placeholder="Code" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {countries.map((country) => (
+                                <SelectItem key={country.code} value={country.code}>
+                                  {country.dial_code}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                           <FormMessage />
+                        </FormItem>
+                      )}
                     />
                     <FormField
-                    control={form.control}
-                    name="mobileNumber"
-                    render={({ field }) => (
-                        <FormControl>
-                        <Input placeholder="9876543210" {...field} className="flex-1"/>
-                        </FormControl>
-                    )}
+                      control={form.control}
+                      name="mobileNumber"
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <FormControl>
+                            <Input placeholder="9876543210" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
                 </div>
-                <FormMessage />
-            </FormItem>
+            </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading && <LoaderCircle className="w-4 h-4 mr-2 animate-spin" />}

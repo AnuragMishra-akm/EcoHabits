@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useMemo } from "react";
+import React, { useRef, useMemo, useState, useEffect } from "react";
 import * as Lucide from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -24,6 +24,7 @@ const iconMap: { [key: string]: React.ElementType } = {
 };
 
 const DeserializeIcon = ({ icon }: { icon: Activity['icon'] }) => {
+  if (!icon || !icon.type) return <Lucide.HelpCircle className="w-5 h-5 text-muted-foreground" />;
   const IconComponent = iconMap[icon.type];
   if (!IconComponent) return <Lucide.HelpCircle className="w-5 h-5 text-muted-foreground" />;
   return <IconComponent {...icon.props} />;
@@ -36,6 +37,22 @@ export default function ProfilePage() {
   const router = useRouter();
   const inputFileRef = useRef<HTMLInputElement>(null);
   const ongoingChallenges = challenges.slice(0, 2);
+
+  const [formattedActivities, setFormattedActivities] = useState<({description: string, id: string, date: string, icon: Activity['icon']})[]>([]);
+
+  const sortedActivities = useMemo(() => {
+    if (!user?.activities) return [];
+    return [...user.activities].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [user?.activities]);
+
+  useEffect(() => {
+    const newFormattedActivities = sortedActivities.slice(0, 5).map(activity => ({
+      ...activity,
+      date: new Date(activity.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
+    }));
+    setFormattedActivities(newFormattedActivities);
+  }, [sortedActivities]);
+
 
   const handleAvatarClick = () => {
     inputFileRef.current?.click();
@@ -57,18 +74,7 @@ export default function ProfilePage() {
       toast({ title: "Logout Failed", description: "Could not log you out. Please try again.", variant: "destructive" });
     }
   };
-
-  const formatActivityDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-  };
   
-  const sortedActivities = useMemo(() => {
-    if (!user?.activities) return [];
-    return [...user.activities].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [user?.activities]);
-
-
   if (!user) {
     return null; // Or a loading indicator
   }
@@ -171,9 +177,9 @@ export default function ProfilePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                 {sortedActivities.length > 0 ? (
+                 {formattedActivities.length > 0 ? (
                    <ul className="space-y-4">
-                     {sortedActivities.slice(0, 5).map(activity => (
+                     {formattedActivities.map(activity => (
                        <li key={activity.id} className="flex items-center gap-4">
                          <div className="p-2 rounded-full bg-secondary">
                            <DeserializeIcon icon={activity.icon} />
@@ -182,7 +188,7 @@ export default function ProfilePage() {
                            <p className="text-sm">{activity.description}</p>
                          </div>
                          <time className="text-xs text-muted-foreground whitespace-nowrap">
-                           {formatActivityDate(activity.date)}
+                           {activity.date}
                          </time>
                        </li>
                      ))}

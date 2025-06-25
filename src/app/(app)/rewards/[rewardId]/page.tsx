@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Copy, Check, Calendar, Gift } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/AuthContext";
 
@@ -16,8 +16,15 @@ export default function RedeemPage() {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
   const { user, redeemReward } = useAuth();
+  const [expiresDate, setExpiresDate] = useState("");
   
   const reward = rewards.find((r) => r.id === params.rewardId);
+
+  useEffect(() => {
+    if (reward) {
+      setExpiresDate(new Date(reward.expires).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }));
+    }
+  }, [reward]);
 
   if (!reward) {
     notFound();
@@ -130,7 +137,7 @@ export default function RedeemPage() {
                     <Calendar className="w-4 h-4" />
                     <span className="text-sm">Expires on:</span>
                 </div>
-                <span className="text-sm font-semibold">{new Date(reward.expires).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                <span className="text-sm font-semibold">{expiresDate || "Loading..."}</span>
             </div>
           </CardContent>
           <CardFooter>
