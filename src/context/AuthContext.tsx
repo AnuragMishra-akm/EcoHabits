@@ -175,54 +175,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const updateImpactScore = async (score: number, pointsToAdd: number) => {
         if (!firebaseUser) return;
-        
-        const userRef = doc(db, 'users', firebaseUser.uid);
-        const newTimestamp = new Date().toISOString();
-
         try {
-            // Step 1: Get the most up-to-date user document.
-            const userDoc = await getDoc(userRef);
-            if (!userDoc.exists()) {
-                throw new Error("User document does not exist.");
-            }
-            const currentUserData = userDoc.data() as UserProfile;
-
-            // Step 2: Prepare the new activities.
+            const userRef = doc(db, 'users', firebaseUser.uid);
+    
+            // Prepare the new activity entries
+            const newTimestamp = new Date().toISOString();
             const scoreActivity = {
-                id: `${new Date().getTime()}-score`,
+                id: `${Date.now()}-score`,
                 date: newTimestamp,
                 description: `Calculated a new Impact Score of ${score}.`,
                 icon: serializeIcon(<Star className="w-5 h-5 text-primary" />),
             };
-
+            
             const newActivities = [scoreActivity];
             if (pointsToAdd > 0) {
                 const bonusActivity = {
-                    id: `${new Date().getTime()}-points`,
+                    id: `${Date.now()}-points`,
                     date: newTimestamp,
                     description: `Earned ${pointsToAdd} bonus points for a high Impact Score!`,
                     icon: serializeIcon(<Gift className="w-5 h-5 text-accent" />),
                 };
                 newActivities.push(bonusActivity);
             }
-
-            // Step 3: Construct the full new user profile object.
-            const updatedUserData: UserProfile = {
-                ...currentUserData,
+    
+            // Prepare the data payload for an atomic update.
+            // The key is to SPREAD the newActivities into arrayUnion.
+            const updatePayload: { impactScore: number, points: FieldValue, activities: FieldValue } = {
                 impactScore: score,
-                points: (currentUserData.points || 0) + pointsToAdd,
-                activities: [...(currentUserData.activities || []), ...newActivities],
+                points: increment(pointsToAdd),
+                activities: arrayUnion(...newActivities),
             };
-            
-            // Step 4: Overwrite the document with the new data.
-            await setDoc(userRef, updatedUserData);
-
-            // Step 5: Update the local state with the new data.
-            setUser(updatedUserData);
-
+    
+            // Atomically update the document in Firestore.
+            await updateDoc(userRef, updatePayload as any);
+    
+            // If the database update is successful, update the local state to match.
+            setUser(prev => {
+                if (!prev) return null;
+                return {
+                    ...prev,
+                    impactScore: score,
+                    points: prev.points + pointsToAdd,
+                    activities: [...prev.activities, ...(newActivities as Activity[])],
+                };
+            });
+    
         } catch (error) {
             console.error("Error updating impact score:", error);
-            toast({ title: "Could not add impact score", description: "There was a problem saving your score. Please try again later.", variant: "destructive" });
+            toast({
+                title: "Could not add impact score",
+                description: "There was a problem saving your score. Please try again later.",
+                variant: "destructive",
+            });
         }
     };
     
