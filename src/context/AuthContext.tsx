@@ -3,7 +3,7 @@
 
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { User as FirebaseUser, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, FieldValue, increment } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, FieldValue, increment, runTransaction } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { fileToDataUri } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -94,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const addActivity = async (activity: Omit<Activity, 'id' | 'date'>) => {
         if (!firebaseUser || !user) return;
         
-        const newActivity = {
+        const newActivity: Activity = {
             ...activity,
             id: new Date().getTime().toString(),
             date: new Date().toISOString(),
@@ -150,11 +150,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const addPoints = async (amount: number) => {
         if (!firebaseUser || !user) return;
-        const newPoints = user.points + amount;
         try {
             const userRef = doc(db, 'users', firebaseUser.uid);
-            await updateDoc(userRef, { points: newPoints });
-            setUser(prev => prev ? { ...prev, points: newPoints } : null);
+            await updateDoc(userRef, { points: increment(amount) });
+            setUser(prev => prev ? { ...prev, points: prev.points + amount } : null);
         } catch (error) {
             console.error("Error adding points:", error);
             toast({ title: "Error", description: "Could not update points.", variant: "destructive" });
@@ -163,43 +162,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const updateImpactScore = async (score: number, pointsToAdd: number) => {
         if (!firebaseUser) return;
-        try {
-            const userRef = doc(db, 'users', firebaseUser.uid);
-            const newTimestamp = new Date().toISOString();
-            
-            const scoreActivity = {
-                id: `${Date.now()}-score`,
-                date: newTimestamp,
-                description: `Calculated a new Impact Score of ${score}.`,
-                icon: { name: "Star", variant: 'primary' as const },
-            };
-            
-            const newActivities = [scoreActivity];
-            if (pointsToAdd > 0) {
-                const bonusActivity = {
-                    id: `${Date.now()}-points`,
-                    date: newTimestamp,
-                    description: `Earned ${pointsToAdd} bonus points for a high Impact Score!`,
-                    icon: { name: "Gift", variant: 'accent' as const },
-                };
-                newActivities.push(bonusActivity);
-            }
-            
-            const updatePayload: { [key: string]: any } = {
-                impactScore: score,
-                points: increment(pointsToAdd),
-                activities: arrayUnion(...newActivities),
-            };
+        
+        const userRef = doc(db, 'users', firebaseUser.uid);
+        let activitiesToAdd: Activity[] = [];
     
-            await updateDoc(userRef, updatePayload);
-            
+        try {
+            await runTransaction(db, async (transaction) => {
+                const userDoc = await transaction.get(userRef);
+                if (!userDoc.exists()) {
+                    throw new Error("User document does not exist!");
+                }
+    
+                const newTimestamp = new Date().toISOString();
+                
+                const scoreActivity: Activity = {
+                    id: `${Date.now()}-score`,
+                    date: newTimestamp,
+                    description: `Calculated a new Impact Score of ${score}.`,
+                    icon: { name: "Star", variant: 'primary' },
+                };
+    
+                // Initialize with the correct type to avoid inference error
+                activitiesToAdd = [scoreActivity];
+    
+                if (pointsToAdd > 0) {
+                    const bonusActivity: Activity = {
+                        id: `${Date.now()}-points`,
+                        date: newTimestamp,
+                        description: `Earned ${pointsToAdd} bonus points for a high Impact Score!`,
+                        icon: { name: "Gift", variant: 'accent' },
+                    };
+                    activitiesToAdd.push(bonusActivity);
+                }
+    
+                transaction.update(userRef, { 
+                    impactScore: score,
+                    points: increment(pointsToAdd),
+                    activities: arrayUnion(...activitiesToAdd),
+                });
+            });
+    
+            // This state update now runs *after* the transaction has successfully committed.
             setUser(prev => {
                 if (!prev) return null;
                 return {
                     ...prev,
                     impactScore: score,
                     points: prev.points + pointsToAdd,
-                    activities: [...prev.activities, ...(newActivities as Activity[])],
+                    activities: [...prev.activities, ...activitiesToAdd],
                 };
             });
     
@@ -216,17 +226,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const redeemReward = async (rewardId: string, pointsToDeduct: number) => {
         if (!firebaseUser || !user) return;
         if (user.points < pointsToDeduct) throw new Error("Not enough points");
-
-        const newPoints = user.points - pointsToDeduct;
         
         try {
             const userRef = doc(db, 'users', firebaseUser.uid);
-            const updatePayload: { points: number; claimedRewards: FieldValue } = {
-                points: newPoints,
+            
+            await updateDoc(userRef, {
+                points: increment(-pointsToDeduct),
                 claimedRewards: arrayUnion(rewardId)
-            };
-            await updateDoc(userRef, updatePayload);
-            setUser(prev => prev ? { ...prev, points: newPoints, claimedRewards: [...prev.claimedRewards, rewardId] } : null);
+            });
+
+            setUser(prev => {
+                if (!prev) return null;
+                return { 
+                    ...prev, 
+                    points: prev.points - pointsToDeduct, 
+                    claimedRewards: [...prev.claimedRewards, rewardId] 
+                }
+            });
 
              await addActivity({
                 description: `Redeemed a reward for ${pointsToDeduct} points.`,
