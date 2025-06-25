@@ -115,7 +115,7 @@ export default function ProfilePage() {
                   />
                 </div>
                 <CardTitle>{user.name}</CardTitle>
-                <CardDescription>{user.email}</CardDescription>
+                <CardDescription className="w-full truncate">{user.email}</CardDescription>
               </CardHeader>
               <CardContent className="grid grid-cols-2 gap-4 text-center">
                  <div className="p-2 rounded-md bg-secondary/50">
