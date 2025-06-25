@@ -61,15 +61,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { toast } = useToast();
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                setFirebaseUser(user);
-                const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
+            if (authUser) {
+                setFirebaseUser(authUser);
+                const userDoc = await getDoc(doc(db, 'users', authUser.uid));
                 if (userDoc.exists()) {
                     setUser(userDoc.data() as UserProfile);
                 } else {
-                    console.log("No user document found, but user is authenticated.");
-                    setUser(null);
+                    // This handles cases where a user is authenticated in Firebase Auth
+                    // but their profile document doesn't exist in Firestore (e.g., interrupted signup).
+                    // We create a new profile to allow them to proceed to onboarding.
+                    console.warn("User document not found. Creating a new profile.");
+                    const newUserProfile: UserProfile = {
+                        uid: authUser.uid,
+                        email: authUser.email || "",
+                        name: authUser.displayName || "New User",
+                        avatar: authUser.photoURL || `https://placehold.co/100x100.png?text=${(authUser.email || "U").charAt(0).toUpperCase()}`,
+                        hasOnboarded: false,
+                        points: 0,
+                        impactScore: 0,
+                        activities: [],
+                        claimedRewards: [],
+                    };
+                    try {
+                        await setDoc(doc(db, "users", authUser.uid), newUserProfile);
+                        setUser(newUserProfile);
+                    } catch (error) {
+                        console.error("Failed to create recovery user profile:", error);
+                        toast({ title: "Login Error", description: "Could not retrieve or create your user profile.", variant: "destructive" });
+                        // If we fail here, we can't proceed. Log them out.
+                        await auth.signOut();
+                    }
                 }
             } else {
                 setFirebaseUser(null);
@@ -79,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
         return () => unsubscribe();
-    }, []);
+    }, [toast]);
     
     const addActivity = async (activity: Omit<Activity, 'id' | 'date'> & { icon: ReactElement }) => {
         if (!firebaseUser || !user) return;
