@@ -181,25 +181,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const updateImpactScore = async (score: number, pointsToAdd: number) => {
         if (!firebaseUser || !user) return;
-        
+
         const newPoints = user.points + pointsToAdd;
+
+        const scoreActivity = {
+            id: new Date().getTime().toString() + '-score',
+            date: new Date().toISOString(),
+            description: `Calculated a new Impact Score of ${score}.`,
+            icon: serializeIcon(<Star className="w-5 h-5 text-primary" />),
+        };
+
+        const activitiesToAdd: Activity[] = [scoreActivity];
+
+        if (pointsToAdd > 0) {
+            const pointsActivity = {
+                id: new Date().getTime().toString() + '-points',
+                date: new Date().toISOString(),
+                description: `Earned ${pointsToAdd} bonus points for a high Impact Score!`,
+                icon: serializeIcon(<Gift className="w-5 h-5 text-accent" />),
+            };
+            activitiesToAdd.push(pointsActivity);
+        }
 
         try {
             const userRef = doc(db, 'users', firebaseUser.uid);
-            await updateDoc(userRef, { impactScore: score, points: newPoints });
-            setUser(prev => prev ? { ...prev, impactScore: score, points: newPoints } : null);
-
-            await addActivity({
-                description: `Calculated a new Impact Score of ${score}.`,
-                icon: <Star className="w-5 h-5 text-primary" />,
+            await updateDoc(userRef, {
+                impactScore: score,
+                points: newPoints,
+                activities: arrayUnion(...activitiesToAdd)
             });
 
-            if (pointsToAdd > 0) {
-                 await addActivity({
-                    description: `Earned ${pointsToAdd} bonus points for a high Impact Score!`,
-                    icon: <Gift className="w-5 h-5 text-accent" />,
-                });
-            }
+            setUser(prev => prev ? { 
+                ...prev, 
+                impactScore: score, 
+                points: newPoints,
+                activities: [...prev.activities, ...activitiesToAdd]
+            } : null);
+
         } catch (error) {
             console.error("Error updating impact score:", error);
             toast({ title: "Error", description: "Could not update impact score.", variant: "destructive" });
@@ -257,7 +275,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         redeemReward
     };
 
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    return (
+      <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+    );
 }
 
 export function useAuth() {
