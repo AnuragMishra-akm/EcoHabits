@@ -38,7 +38,9 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
-      router.push("/");
+      // Redirection is now handled by the AuthLayout, which waits for the auth
+      // state to update. This prevents the race condition where the app
+      // redirects before the user state is updated in the context.
     } catch (error: any) {
       toast({
         variant: "destructive",
