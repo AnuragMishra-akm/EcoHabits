@@ -174,43 +174,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const updateImpactScore = async (score: number, pointsToAdd: number) => {
-        if (!firebaseUser || !user) return;
+        if (!firebaseUser) return;
+        
         const userRef = doc(db, 'users', firebaseUser.uid);
         const newTimestamp = new Date().toISOString();
 
-        const scoreActivity = {
-            id: new Date().getTime().toString() + '-score',
-            date: newTimestamp,
-            description: `Calculated a new Impact Score of ${score}.`,
-            icon: serializeIcon(<Star className="w-5 h-5 text-primary" />),
-        };
-        
-        const activitiesToAdd = [scoreActivity];
-        if (pointsToAdd > 0) {
-            const bonusActivity = {
-                id: new Date().getTime().toString() + '-points',
-                date: newTimestamp,
-                description: `Earned ${pointsToAdd} bonus points for a high Impact Score!`,
-                icon: serializeIcon(<Gift className="w-5 h-5 text-accent" />),
-            };
-            activitiesToAdd.push(bonusActivity);
-        }
-
         try {
-            await updateDoc(userRef, {
-                impactScore: score,
-                points: increment(pointsToAdd),
-                activities: arrayUnion(...activitiesToAdd),
-            });
+            // Step 1: Get the most up-to-date user document.
+            const userDoc = await getDoc(userRef);
+            if (!userDoc.exists()) {
+                throw new Error("User document does not exist.");
+            }
+            const currentUserData = userDoc.data() as UserProfile;
 
-            // If update succeeds, update local state
-            const updatedUser: UserProfile = {
-                ...user,
-                impactScore: score,
-                points: (user.points || 0) + pointsToAdd,
-                activities: [...(user.activities || []), ...activitiesToAdd],
+            // Step 2: Prepare the new activities.
+            const scoreActivity = {
+                id: `${new Date().getTime()}-score`,
+                date: newTimestamp,
+                description: `Calculated a new Impact Score of ${score}.`,
+                icon: serializeIcon(<Star className="w-5 h-5 text-primary" />),
             };
-            setUser(updatedUser);
+
+            const newActivities = [scoreActivity];
+            if (pointsToAdd > 0) {
+                const bonusActivity = {
+                    id: `${new Date().getTime()}-points`,
+                    date: newTimestamp,
+                    description: `Earned ${pointsToAdd} bonus points for a high Impact Score!`,
+                    icon: serializeIcon(<Gift className="w-5 h-5 text-accent" />),
+                };
+                newActivities.push(bonusActivity);
+            }
+
+            // Step 3: Construct the full new user profile object.
+            const updatedUserData: UserProfile = {
+                ...currentUserData,
+                impactScore: score,
+                points: (currentUserData.points || 0) + pointsToAdd,
+                activities: [...(currentUserData.activities || []), ...newActivities],
+            };
+            
+            // Step 4: Overwrite the document with the new data.
+            await setDoc(userRef, updatedUserData);
+
+            // Step 5: Update the local state with the new data.
+            setUser(updatedUserData);
 
         } catch (error) {
             console.error("Error updating impact score:", error);
