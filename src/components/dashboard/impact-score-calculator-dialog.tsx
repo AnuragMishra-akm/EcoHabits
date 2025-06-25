@@ -20,31 +20,29 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { calculateImpactScore, type ImpactScoreOutput } from "@/ai/flows/calculate-impact-score";
 import { generateImpactQuestions, type ImpactQuestionsOutput } from "@/ai/flows/generate-impact-questions";
-import { LoaderCircle, Sparkles, Lightbulb, Star, Timer } from "lucide-react";
+import { LoaderCircle, Sparkles, Lightbulb, Star } from "lucide-react";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useAuth } from "@/context/AuthContext";
 
 type Question = ImpactQuestionsOutput['questions'][0];
 
-export function ImpactScoreCalculatorDialog({ children }: { children: ReactNode }) {
-  const { toast } = useToast();
-  const { user, updateImpactScore } = useAuth();
-  const [open, setOpen] = useState(false);
-  const [stage, setStage] = useState<'loadingQuestions' | 'form' | 'calculating' | 'result'>('loadingQuestions');
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [result, setResult] = useState<ImpactScoreOutput | null>(null);
-
+// This new component contains the form logic and is only rendered when questions are available.
+function QuestionnaireForm({
+  questions,
+  onSubmit,
+}: {
+  questions: Question[];
+  onSubmit: (data: Record<string, any>) => void;
+}) {
+  // The schema is now built inside this component, ensuring types are correct on initialization.
   const formSchema = useMemo(() => {
-    if (questions.length === 0) {
-      return z.object({});
-    }
     const shape = questions.reduce((acc, q) => {
       acc[q.id] = z.string({ required_error: "Please select an option." });
       return acc;
     }, {} as Record<string, z.ZodString>);
     return z.object(shape);
   }, [questions]);
-  
+
   type FormValues = z.infer<typeof formSchema>;
 
   const form = useForm<FormValues>({
@@ -52,10 +50,54 @@ export function ImpactScoreCalculatorDialog({ children }: { children: ReactNode 
     defaultValues: {},
   });
 
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4 max-h-[60vh] overflow-y-auto pr-4">
+        {questions.map((q, index) => (
+          <FormField
+            control={form.control}
+            key={q.id}
+            name={q.id}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{index + 1}. {q.text}</FormLabel>
+                <FormControl>
+                  <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {q.options.map(option => (
+                      <Label key={option} className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-accent has-[[data-state=checked]]:bg-accent">
+                        <RadioGroupItem value={option} /> {option}
+                      </Label>
+                    ))}
+                  </RadioGroup>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        ))}
+        {questions.length > 0 && (
+          <Button type="submit" className="w-full">
+            <Sparkles className="w-4 h-4 mr-2" />
+            Calculate My Score
+          </Button>
+        )}
+      </form>
+    </Form>
+  );
+}
+
+
+export function ImpactScoreCalculatorDialog({ children }: { children: ReactNode }) {
+  const { toast } = useToast();
+  const { updateImpactScore } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [stage, setStage] = useState<'loadingQuestions' | 'form' | 'calculating' | 'result'>('loadingQuestions');
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [result, setResult] = useState<ImpactScoreOutput | null>(null);
+
   const fetchQuestions = async () => {
     setStage('loadingQuestions');
     setResult(null);
-    form.reset();
     try {
       const data = await generateImpactQuestions();
       setQuestions(data.questions);
@@ -77,11 +119,11 @@ export function ImpactScoreCalculatorDialog({ children }: { children: ReactNode 
     }
   }, [open]);
 
-  const handleSubmit = async (data: FormValues) => {
+  const handleSubmit = async (data: Record<string, string>) => {
     setStage('calculating');
 
     const answersForApi = questions.reduce((acc: Record<string, string>, question) => {
-        acc[question.text] = (data as Record<string, string>)[question.id];
+        acc[question.text] = data[question.id];
         return acc;
     }, {});
 
@@ -120,7 +162,6 @@ export function ImpactScoreCalculatorDialog({ children }: { children: ReactNode 
         setStage('loadingQuestions');
         setQuestions([]);
         setResult(null);
-        form.reset();
       }, 300);
     }
     setOpen(isOpen);
@@ -136,40 +177,8 @@ export function ImpactScoreCalculatorDialog({ children }: { children: ReactNode 
           </div>
         );
       case 'form':
-        return (
-           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 py-4 max-h-[60vh] overflow-y-auto pr-4">
-              {questions.map((q, index) => (
-                <FormField
-                  control={form.control}
-                  key={q.id}
-                  name={q.id}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{index + 1}. {q.text}</FormLabel>
-                      <FormControl>
-                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {q.options.map(option => (
-                            <Label key={option} className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-accent has-[[data-state=checked]]:bg-accent">
-                              <RadioGroupItem value={option} /> {option}
-                            </Label>
-                          ))}
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              ))}
-              {questions.length > 0 && (
-                <Button type="submit" className="w-full">
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Calculate My Score
-                </Button>
-              )}
-            </form>
-          </Form>
-        );
+        // Render the new form component only when the stage is 'form'
+        return <QuestionnaireForm questions={questions} onSubmit={handleSubmit} />;
       case 'calculating':
         return (
           <div className="flex flex-col items-center justify-center p-12 text-center h-64">
