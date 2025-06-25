@@ -12,9 +12,9 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const ImpactScoreInputSchema = z.object({
-  commute: z.string().describe('Primary mode of commute.'),
-  diet: z.string().describe('Frequency of eating red meat.'),
-  energy: z.string().describe('Household energy source.'),
+  answers: z
+    .record(z.string(), z.string())
+    .describe('A JSON object where keys are the full question texts and values are the user-selected answers.'),
 });
 export type ImpactScoreInput = z.infer<typeof ImpactScoreInputSchema>;
 
@@ -34,16 +34,14 @@ export async function calculateImpactScore(input: ImpactScoreInput): Promise<Imp
 
 const prompt = ai.definePrompt({
   name: 'impactScorePrompt',
-  input: {schema: ImpactScoreInputSchema},
+  input: {schema: z.object({ answersJson: z.string() })},
   output: {schema: ImpactScoreOutputSchema},
   prompt: `You are an AI assistant that assesses a user's environmental impact based on their lifestyle choices. Calculate an impact score from 0 to 1000, where 1000 represents a highly sustainable lifestyle.
 
-Analyze the following user answers:
-- Primary Commute: {{{commute}}}
-- Red Meat Consumption: {{{diet}}}
-- Home Energy Source: {{{energy}}}
+Analyze the user's answers provided in the following JSON object of question-answer pairs:
+{{{answersJson}}}
 
-Based on these answers, provide a numerical 'impactScore' and actionable 'feedback' for the user. A user who bikes, never eats red meat, and uses 100% renewable energy should get a score close to 1000. A user who drives a gas car, eats red meat daily, and uses non-renewable energy should get a low score.`,
+Based on these answers, provide a numerical 'impactScore' and actionable 'feedback' for the user. A user with highly eco-friendly answers should get a score close to 1000. A user with less sustainable choices should get a lower score. The feedback should be encouraging and provide 1-2 specific, actionable tips for improvement based on their lowest-scoring answers.`,
 });
 
 const calculateImpactScoreFlow = ai.defineFlow(
@@ -52,8 +50,9 @@ const calculateImpactScoreFlow = ai.defineFlow(
     inputSchema: ImpactScoreInputSchema,
     outputSchema: ImpactScoreOutputSchema,
   },
-  async input => {
-    const {output} = await prompt(input);
+  async ({ answers }) => {
+    const answersJson = JSON.stringify(answers, null, 2);
+    const {output} = await prompt({ answersJson });
     return output!;
   }
 );
