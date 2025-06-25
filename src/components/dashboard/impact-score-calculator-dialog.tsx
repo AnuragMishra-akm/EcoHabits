@@ -81,7 +81,7 @@ export function ImpactScoreCalculatorDialog({ children }: { children: ReactNode 
     setStage('calculating');
 
     const answersForApi = questions.reduce((acc: Record<string, string>, question) => {
-        acc[question.text] = data[question.id];
+        acc[question.text] = (data as Record<string, string>)[question.id];
         return acc;
     }, {});
 
